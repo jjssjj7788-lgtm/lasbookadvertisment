@@ -211,108 +211,78 @@ function getCardBadge(tags) {
 
 function getCardMediaHtml(data, isVideo, isAudio, docId) {
     if (isAudio) {
-        let audioUrl = data.url;
-        if (data.mediaArray && data.mediaArray.length > 0) {
+        let audioUrl = data.thumbnailUrl;
+        if (!audioUrl && data.mediaArray && data.mediaArray.length > 0) {
             audioUrl = data.mediaArray[0].url;
         }
+        if (!audioUrl) audioUrl = data.url;
         
         if (data.thumbnailUrl) {
             return `
                 <img class="real-img" src="${data.thumbnailUrl}" />
-                <div class="wave" onclick="window.open('${audioUrl}', '_blank')" style="position:absolute; inset:0; height:100%; width:100%; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.4); z-index:2; cursor:pointer;" title="새 창에서 듣기">
+                <div class="wave" style="position:absolute; inset:0; height:100%; width:100%; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.4); z-index:2;">
                     <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
                 </div>
             `;
         } else {
-            return `<div class="wave" onclick="window.open('${audioUrl}', '_blank')" style="cursor:pointer;" title="새 창에서 듣기"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>`;
+            return `<div class="wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>`;
         }
     }
     
     // 단일 미디어 또는 옛날 데이터 (mediaArray 없음)
     if (!data.mediaArray || data.mediaArray.length <= 1) {
         let url = data.thumbnailUrl;
-        let mainMediaUrl = data.url;
-        if (data.mediaArray && data.mediaArray.length === 1) {
-            if (!url) url = data.mediaArray[0].url;
-            mainMediaUrl = data.mediaArray[0].url;
+        if (data.mediaArray && data.mediaArray.length === 1 && !url) {
+            url = data.mediaArray[0].url;
         } else if (!url) {
             url = data.url;
         }
 
         if (url) {
             if (isVideo || (url.match(/\.(mp4|webm)$/i))) {
-                 if (data.thumbnailUrl) {
-                     return `<img class="real-img" src="${data.thumbnailUrl}" onclick="window.open('${mainMediaUrl}', '_blank')" />`;
-                 }
-                 return `<video class="real-video" src="${url}" controls preload="metadata"></video>`;
+                 if (data.thumbnailUrl) return `<img class="real-img" src="${data.thumbnailUrl}" />`;
+                 return `<video class="real-video" src="${url}" preload="metadata"></video>`;
             } else if (url.match(/\.(jpeg|jpg|gif|png)$/i)) {
-                 return `<img class="real-img" src="${url}" onclick="window.open('${mainMediaUrl}', '_blank')" />`;
+                 return `<img class="real-img" src="${url}" />`;
             }
         }
         return `<img class="real-img" src="assets/seal.png" style="object-fit:contain; padding:20px;"/>`;
     }
 
-    // 다중 미디어 (슬라이더 적용)
-    let sliderId = 'slider_' + docId;
-    let html = `<div class="media-slider" id="${sliderId}" style="display:flex; width:100%; height:100%; overflow-x:auto; scroll-snap-type: x mandatory; scrollbar-width: none; -ms-overflow-style: none;">`;
-    
-    data.mediaArray.forEach((media, idx) => {
-        let displayUrl = (idx === 0 && data.thumbnailUrl) ? data.thumbnailUrl : media.url;
-        let slideContent = '';
-        if (media.type === 'video' || (displayUrl && displayUrl.match(/\.(mp4|webm)$/i))) {
-            if (data.thumbnailUrl && idx === 0) {
-                slideContent = `<img class="real-img" src="${data.thumbnailUrl}" onclick="window.open('${media.url}', '_blank')"/>`;
-            } else {
-                slideContent = `<video class="real-video" src="${media.url}" controls preload="metadata"></video>`;
-            }
+    // 다중 미디어 (메인화면에서는 대표 이미지만 표시하고 우측 상단에 장수 표시)
+    let displayUrl = data.thumbnailUrl || data.mediaArray[0].url;
+    let html = '';
+    if (data.mediaArray[0].type === 'video' || (displayUrl && displayUrl.match(/\.(mp4|webm)$/i))) {
+        if (data.thumbnailUrl) {
+            html = `<img class="real-img" src="${data.thumbnailUrl}" />`;
         } else {
-            slideContent = `<img class="real-img" src="${displayUrl}" onclick="window.open('${media.url}', '_blank')"/>`;
+            html = `<video class="real-video" src="${data.mediaArray[0].url}" preload="metadata"></video>`;
         }
-        html += `<div style="flex: 0 0 100%; scroll-snap-align: center; position:relative; width:100%; height:100%;">
-                    ${slideContent}
-                 </div>`;
-    });
-    html += `</div>`;
-    
-    // 좌우 화살표 및 장수 뱃지 추가
-    html += `
-        <button class="slider-btn left" onclick="event.stopPropagation(); document.getElementById('${sliderId}').scrollBy({left:-300, behavior:'smooth'})">◀</button>
-        <button class="slider-btn right" onclick="event.stopPropagation(); document.getElementById('${sliderId}').scrollBy({left:300, behavior:'smooth'})">▶</button>
-        <div class="multi-badge" style="position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.7); color:white; padding:4px 8px; border-radius:12px; font-size:11px; font-weight:bold; z-index:10;">${data.mediaArray.length}장</div>
-    `;
-
+    } else {
+        html = `<img class="real-img" src="${displayUrl}" />`;
+    }
+    html += `<div class="multi-badge" style="position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.7); color:white; padding:4px 8px; border-radius:12px; font-size:11px; font-weight:bold; z-index:10;">${data.mediaArray.length}장</div>`;
     return html;
 }
 
 function createCard(doc, data) {
+    windowDataStore[doc.id] = data; // 저장해두고 모달에서 사용
+    
     const isVideo = data.tags && data.tags.includes('video');
     const isAudio = data.tags && data.tags.includes('audio');
     const badgeText = getCardBadge(data.tags || []);
     const dateText = formatDate(data.createdAt);
     const mediaHtml = getCardMediaHtml(data, isVideo, isAudio, doc.id);
     
-    // 오디오 파일이 있으면 카드 내용(card-body) 안에 플레이어 직접 생성
-    let audioPlayersHtml = '';
-    if (isAudio) {
-        if (data.mediaArray && data.mediaArray.length > 0) {
-            data.mediaArray.forEach((media) => {
-                // 파이어베이스 예전 데이터나 확장자가 없는 URL도 무조건 오디오 플레이어로 강제 렌더링
-                audioPlayersHtml += `<audio controls src="${media.url}" style="width:100%; height:36px; margin-top:8px; border-radius:6px;"></audio>`;
-            });
-        } else if (data.url) {
-            audioPlayersHtml = `<audio controls src="${data.url}" style="width:100%; height:36px; margin-top:8px; border-radius:6px;"></audio>`;
-        }
-    }
-    
     let adminControls = `
         <div class="admin-controls hidden">
-            <button class="edit-btn" data-id="${doc.id}">수정</button>
-            <button class="delete-btn" data-id="${doc.id}">삭제</button>
+            <button class="edit-btn" data-id="${doc.id}" onclick="event.stopPropagation()">수정</button>
+            <button class="delete-btn" data-id="${doc.id}" onclick="event.stopPropagation()">삭제</button>
         </div>
     `;
 
     return `
-      <article class="card" data-title="${(data.title||'').toLowerCase()}" data-desc="${(data.desc||'').toLowerCase()}">
+      <article class="card" data-title="${(data.title||'').toLowerCase()}" data-desc="${(data.desc||'').toLowerCase()}" onclick="openDetailModal('${doc.id}')" style="cursor:pointer;">
         <div class="thumb">
           <span class="badge" style="z-index:10;">
             ${isVideo?'<svg style="width:11px;height:11px" viewBox="0 0 24 24" fill="currentColor"><polygon points="6,4 20,12 6,20"/></svg>':''}
@@ -325,7 +295,6 @@ function createCard(doc, data) {
         <div class="card-body">
           <div class="card-title">${data.title}</div>
           <div class="card-desc">${data.desc || ''}</div>
-          ${audioPlayersHtml}
           <div class="card-meta">
             <span>${dateText}</span>
             ${adminControls}
@@ -510,4 +479,109 @@ input.addEventListener("input", () => {
             el.style.display = "none";
         }
     });
+});
+
+// ============ 상세 보기 모달 (유튜브 스타일) ============
+const detailModal = document.getElementById("detailModal");
+const detailCloseBtn = document.getElementById("detailCloseBtn");
+const detailMediaArea = document.getElementById("detailMediaArea");
+const detailTags = document.getElementById("detailTags");
+const detailTitle = document.getElementById("detailTitle");
+const detailMeta = document.getElementById("detailMeta");
+const detailDesc = document.getElementById("detailDesc");
+
+function openDetailModal(docId) {
+    const data = windowDataStore[docId];
+    if (!data) return;
+
+    // 1. 텍스트 세팅
+    detailTitle.textContent = data.title || '제목 없음';
+    detailDesc.textContent = data.desc || '';
+    detailMeta.textContent = formatDate(data.createdAt);
+    detailTags.innerHTML = '';
+    if (data.tags && data.tags.length > 0) {
+        data.tags.forEach(t => {
+            const span = document.createElement("span");
+            span.className = "badge";
+            let label = t;
+            if (t === 'video') label = '영상';
+            if (t === 'audio') label = '음성';
+            if (t === 'image') label = '이미지';
+            if (t === 'doc') label = '문서';
+            span.textContent = '#' + label;
+            detailTags.appendChild(span);
+        });
+    }
+
+    // 2. 미디어 세팅
+    detailMediaArea.innerHTML = '';
+    const isAudio = data.tags && data.tags.includes('audio');
+    
+    let items = [];
+    if (data.mediaArray && data.mediaArray.length > 0) {
+        items = data.mediaArray;
+    } else if (data.url) {
+        items = [{ url: data.url }];
+    }
+
+    if (items.length === 0) {
+        detailMediaArea.innerHTML = `<img src="assets/seal.png" style="padding:20px; object-fit:contain;"/>`;
+    } else if (items.length === 1) {
+        const media = items[0];
+        if (isAudio) {
+            let thumb = data.thumbnailUrl ? `<img src="${data.thumbnailUrl}" style="width:100%; height:80%; object-fit:cover; position:absolute; top:0;" />` : `<div class="wave" style="height:100%; width:100%;"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>`;
+            detailMediaArea.innerHTML = `
+                <div style="position:relative; width:100%; height:100%; display:flex; flex-direction:column; justify-content:flex-end;">
+                    ${thumb}
+                    <audio src="${media.url}" controls autoplay style="width:100%; height:20%; z-index:10; border-radius:0; background:#f1f3f5; padding:10px; box-sizing:border-box;"></audio>
+                </div>
+            `;
+        } else if (media.type === 'video' || (media.url.match(/\.(mp4|webm)$/i))) {
+            detailMediaArea.innerHTML = `<video src="${media.url}" controls autoplay style="width:100%; height:100%; object-fit:contain;"></video>`;
+        } else {
+            detailMediaArea.innerHTML = `<img src="${media.url}" style="width:100%; height:100%; object-fit:contain;"/>`;
+        }
+    } else {
+        // 다중 슬라이더 처리
+        let sliderId = 'detailSlider_' + docId;
+        let sliderHtml = `<div class="detail-slider" id="${sliderId}">`;
+        items.forEach((media, idx) => {
+            if (isAudio) {
+                let thumb = data.thumbnailUrl ? `<img src="${data.thumbnailUrl}" style="width:100%; height:80%; object-fit:cover; position:absolute; top:0;" />` : `<div class="wave" style="height:100%; width:100%;"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>`;
+                sliderHtml += `
+                    <div class="detail-slide-item">
+                        <div style="position:relative; width:100%; height:100%; display:flex; flex-direction:column; justify-content:flex-end;">
+                            ${thumb}
+                            <audio src="${media.url}" controls ${idx===0?'autoplay':''} style="width:100%; height:20%; z-index:10; border-radius:0; background:#f1f3f5; padding:10px; box-sizing:border-box;"></audio>
+                        </div>
+                    </div>`;
+            } else if (media.type === 'video' || (media.url.match(/\.(mp4|webm)$/i))) {
+                sliderHtml += `<div class="detail-slide-item"><video src="${media.url}" controls ${idx===0?'autoplay':''} style="width:100%; height:100%; object-fit:contain;"></video></div>`;
+            } else {
+                sliderHtml += `<div class="detail-slide-item"><img src="${media.url}" style="width:100%; height:100%; object-fit:contain;"/></div>`;
+            }
+        });
+        sliderHtml += `</div>
+            <button class="detail-slider-btn left" onclick="document.getElementById('${sliderId}').scrollBy({left:-500, behavior:'smooth'})">◀</button>
+            <button class="detail-slider-btn right" onclick="document.getElementById('${sliderId}').scrollBy({left:500, behavior:'smooth'})">▶</button>
+        `;
+        detailMediaArea.innerHTML = sliderHtml;
+    }
+
+    detailModal.classList.remove("hidden");
+    document.body.style.overflow = "hidden"; // 스크롤 방지
+}
+
+detailCloseBtn.addEventListener("click", () => {
+    detailModal.classList.add("hidden");
+    document.body.style.overflow = "";
+    detailMediaArea.innerHTML = ""; // 모달 닫을 때 미디어(영상/음성) 재생 중지
+});
+
+detailModal.addEventListener("click", (e) => {
+    if (e.target === detailModal) {
+        detailModal.classList.add("hidden");
+        document.body.style.overflow = "";
+        detailMediaArea.innerHTML = "";
+    }
 });
