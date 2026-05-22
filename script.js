@@ -88,20 +88,24 @@ const storage = firebase.storage();
 // --- 모달 요소 ---
 const loginModal = document.getElementById('loginModal');
 const uploadModal = document.getElementById('uploadModal');
+const editModal = document.getElementById('editModal');
 const openLoginBtn = document.getElementById('openLoginBtn');
 const openUploadBtn = document.getElementById('openUploadBtn');
 const logoutBtn = document.getElementById('logoutBtn');
 const closeLoginBtn = document.getElementById('closeLoginBtn');
 const closeUploadBtn = document.getElementById('closeUploadBtn');
+const closeEditBtn = document.getElementById('closeEditBtn');
 
 // 모달 열기/닫기
 openLoginBtn.addEventListener('click', (e) => { e.preventDefault(); loginModal.style.display = 'flex'; });
 openUploadBtn.addEventListener('click', () => { uploadModal.style.display = 'flex'; });
 closeLoginBtn.addEventListener('click', () => { loginModal.style.display = 'none'; });
 closeUploadBtn.addEventListener('click', () => { uploadModal.style.display = 'none'; });
+closeEditBtn.addEventListener('click', () => { editModal.style.display = 'none'; });
 window.addEventListener('click', (e) => {
     if (e.target == loginModal) loginModal.style.display = 'none';
     if (e.target == uploadModal) uploadModal.style.display = 'none';
+    if (e.target == editModal) editModal.style.display = 'none';
 });
 
 // --- 인증 (로그인/로그아웃) ---
@@ -325,13 +329,16 @@ db.collection('gallery').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
                 <div class="badges-container">${badgesHtml}</div>
                 ${mediaHtml}
                 <p>${data.desc}</p>
-                <button class="delete-btn btn btn-secondary hidden" style="margin: 0 20px 20px; font-size:12px; padding: 5px 10px; background:#ff4444;" data-id="${doc.id}">삭제</button>
+                <div style="display:flex; justify-content:center; gap:10px; margin-bottom:20px;">
+                    <button class="edit-btn btn btn-primary hidden" style="margin: 0; font-size:12px; padding: 5px 15px;" data-id="${doc.id}">수정</button>
+                    <button class="delete-btn btn btn-secondary hidden" style="margin: 0; font-size:12px; padding: 5px 15px; background:#ff4444;" data-id="${doc.id}">삭제</button>
+                </div>
             </div>
         `;
         galleryContainer.innerHTML += itemHtml;
     });
 
-    // 관리자일 경우 삭제 버튼 표시
+    // 관리자일 경우 삭제 및 수정 버튼 표시
     auth.onAuthStateChanged(user => {
         if (user) {
             document.querySelectorAll('.delete-btn').forEach(btn => {
@@ -342,6 +349,54 @@ db.collection('gallery').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
                     }
                 };
             });
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.classList.remove('hidden');
+                btn.onclick = async () => {
+                    const docId = btn.getAttribute('data-id');
+                    const docRef = await db.collection('gallery').doc(docId).get();
+                    const docData = docRef.data();
+                    
+                    document.getElementById('editDocId').value = docId;
+                    document.getElementById('editTitle').value = docData.title || '';
+                    document.getElementById('editDesc').value = docData.desc || '';
+                    
+                    document.querySelectorAll('input[name="editTags"]').forEach(cb => {
+                        cb.checked = (docData.tags && docData.tags.includes(cb.value));
+                    });
+                    
+                    document.getElementById('editModal').style.display = 'flex';
+                };
+            });
         }
     });
+});
+
+// --- 수정 기능 처리 ---
+document.getElementById('submitEditBtn').addEventListener('click', async () => {
+    const docId = document.getElementById('editDocId').value;
+    const title = document.getElementById('editTitle').value;
+    const desc = document.getElementById('editDesc').value;
+    const status = document.getElementById('editStatus');
+    
+    if (!title) { status.innerText = "제목을 입력해주세요."; return; }
+    
+    const tagCheckboxes = document.querySelectorAll('input[name="editTags"]:checked');
+    let tags = [];
+    tagCheckboxes.forEach(cb => tags.push(cb.value));
+    
+    status.innerText = "수정 중...";
+    try {
+        await db.collection('gallery').doc(docId).update({
+            title: title,
+            desc: desc,
+            tags: tags
+        });
+        status.innerText = "수정 완료!";
+        setTimeout(() => {
+            document.getElementById('editModal').style.display = 'none';
+            status.innerText = "";
+        }, 1000);
+    } catch (error) {
+        status.innerText = "오류 발생: " + error.message;
+    }
 });

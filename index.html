@@ -9,71 +9,24 @@
 <body>
     <!-- 헤더 -->
     <header class="header">
-        <div class="container">
-            <div class="logo">
+        <div class="container" style="position:relative;">
+            <div class="logo" style="position:relative; z-index:20;">
                 <h1>라스북 선물 꾸러미</h1>
                 <p class="tagline">보급자의 수익 창출, 학부모의 혜택 극대화</p>
             </div>
-            <nav class="nav">
-                <a href="#about" class="nav-link">회사소개</a>
-                <a href="#gallery" class="nav-link">자료실</a>
-                <a href="#contact" class="nav-link">연락처</a>
-            </nav>
+            <!-- 귀여운 캐릭터들 (둥둥 떠다님) -->
+            <img src="assets/seal.png" class="cute-char char-seal" alt="보라색 물개">
+            <img src="assets/rabbit.png" class="cute-char char-rabbit" alt="핑크색 토끼">
+            <img src="assets/monkey.png" class="cute-char char-monkey" alt="초록색 원숭이">
+            <img src="assets/fox.jpg" class="cute-char char-fox" alt="노란색 여우">
         </div>
     </header>
 
-    <!-- 히어로 섹션 -->
-    <section class="hero">
-        <div class="container">
-            <div class="hero-content">
-                <div class="slogan-badge">🎯 라스북의 슬로건</div>
-                <h2 class="hero-main-slogan">보급자가 돈을 벌고,<br>학부모에게 혜택이 가야한다</h2>
-                <p class="hero-subtitle">우리는 모두가 행복한 생태계를 만들기 위해 노력하고 있습니다</p>
-                <div class="slogan-points">
-                    <div class="point-item">
-                        <span class="point-icon">💰</span>
-                        <strong>보급자의 수익</strong><br>
-                        정당한 보상으로 소득 창출
-                    </div>
-                    <div class="point-item">
-                        <span class="point-icon">👨‍👩‍👧‍👦</span>
-                        <strong>학부모의 혜택</strong><br>
-                        최고의 가치로 신뢰 획득
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
+    <!-- 귀여운 단체 사진 배너 -->
+    <div style="max-width:800px; margin: -20px auto 30px; padding: 0 20px; text-align:center; position:relative; z-index:10;">
+        <img src="assets/group.jpg" alt="캐릭터 단체 사진" style="width:100%; border-radius: 20px; box-shadow: 0 15px 30px rgba(0,0,0,0.15); border: 5px solid white;">
+    </div>
 
-    <!-- 회사 소개 섹션 -->
-    <section id="about" class="about">
-        <div class="container">
-            <h2 class="section-title">라스북의 핵심 가치</h2>
-            <p class="section-subtitle">우리의 모든 활동은 이 슬로건 아래에 이루어집니다</p>
-            <div class="about-grid">
-                <div class="about-card">
-                    <div class="about-icon">💰</div>
-                    <h3>보급자의 수익</h3>
-                    <p>보급자가 정당한 수익을 창출할 수 있는 건강한 수익 구조를 제공합니다</p>
-                </div>
-                <div class="about-card">
-                    <div class="about-icon">👨‍👩‍👧‍👦</div>
-                    <h3>학부모의 혜택</h3>
-                    <p>학부모가 최고의 가치를 누릴 수 있도록 최적의 혜택을 제공합니다</p>
-                </div>
-                <div class="about-card">
-                    <div class="about-icon">🤝</div>
-                    <h3>윈-윈 생태계</h3>
-                    <p>모든 참여자가 함께 성장하는 건강한 생태계를 구축합니다</p>
-                </div>
-                <div class="about-card">
-                    <div class="about-icon">🎯</div>
-                    <h3>지속적 성장</h3>
-                    <p>투명하고 공정한 비즈니스 방식으로 지속 가능한 성장을 추구합니다</p>
-                </div>
-            </div>
-        </div>
-    </section>
 
     <!-- 자료실 섹션 -->
     <section id="gallery" class="gallery">
@@ -94,38 +47,6 @@
 
 
 
-    <!-- 연락처 섹션 -->
-    <section id="contact" class="contact">
-        <div class="container">
-            <h2 class="section-title">라스북과 연결되세요</h2>
-            
-            <div class="contact-grid">
-                <div class="contact-card">
-                    <h4>📧 이메일</h4>
-                    <p>info@rasbook.com</p>
-                </div>
-                <div class="contact-card">
-                    <h4>📞 전화</h4>
-                    <p>02-1234-5678</p>
-                </div>
-                <div class="contact-card">
-                    <h4>📍 주소</h4>
-                    <p>서울시 강남구 테헤란로</p>
-                </div>
-                <div class="contact-card">
-                    <h4>🕐 업무시간</h4>
-                    <p>평일 09:00 - 18:00</p>
-                </div>
-            </div>
-
-            <div class="social-links">
-                <a href="#" class="social-icon">Facebook</a>
-                <a href="#" class="social-icon">Instagram</a>
-                <a href="#" class="social-icon">LinkedIn</a>
-                <a href="#" class="social-icon">YouTube</a>
-            </div>
-        </div>
-    </section>
 
     <!-- 푸터 -->
     <footer class="footer">
@@ -181,6 +102,31 @@
             </div>
             <p id="uploadStatus" style="color:blue; font-size:14px; margin-top:10px;"></p>
             <button id="submitUploadBtn" class="btn btn-primary" style="margin:20px 0 0 0; width:100%;">업로드 완료</button>
+        </div>
+    </div>
+
+    <!-- 자료 수정 모달 -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" id="closeEditBtn">&times;</span>
+            <h2>자료 수정하기</h2>
+            <input type="hidden" id="editDocId">
+            <input type="text" id="editTitle" placeholder="가장 크게 보일 제목 (예: 상하이 박람회)" style="font-size:18px; font-weight:bold; border:2px solid var(--primary-color);">
+            <div class="form-group" style="margin: 15px 0; background:#f9f9f9; padding:15px; border-radius:10px;">
+                <label style="display:block; margin-bottom:10px; font-weight:bold;">이 게시물의 성격 뱃지 (다중 선택 가능)</label>
+                <div style="display:flex; gap:15px; flex-wrap:wrap; font-size:14px;">
+                    <label style="cursor:pointer;"><input type="checkbox" name="editTags" value="video"> 🎥 영상</label>
+                    <label style="cursor:pointer;"><input type="checkbox" name="editTags" value="image"> 🖼️ 이미지</label>
+                    <label style="cursor:pointer;"><input type="checkbox" name="editTags" value="audio"> 🎙️ 음성</label>
+                    <label style="cursor:pointer;"><input type="checkbox" name="editTags" value="doc"> 📄 문서</label>
+                    <label style="cursor:pointer;"><input type="checkbox" name="editTags" value="link"> 🌐 외부 링크</label>
+                    <label style="cursor:pointer;"><input type="checkbox" name="editTags" value="poster"> 📋 포스터</label>
+                </div>
+            </div>
+            <input type="text" id="editDesc" placeholder="간단한 설명">
+            <p style="font-size:12px; color:#666; margin-top:10px;">* 첨부파일이나 썸네일을 바꾸려면 이 글을 삭제하고 새로 업로드해주세요.</p>
+            <p id="editStatus" style="color:blue; font-size:14px; margin-top:10px;"></p>
+            <button id="submitEditBtn" class="btn btn-secondary" style="margin:20px 0 0 0; width:100%;">수정 완료</button>
         </div>
     </div>
 
