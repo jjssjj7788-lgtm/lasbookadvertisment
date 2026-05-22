@@ -167,9 +167,15 @@
             </select>
             <input type="text" id="uploadTitle" placeholder="제목 (예: 박람회 사진)">
             <input type="text" id="uploadDesc" placeholder="간단한 설명">
-            <p style="font-size:12px; color:#666; margin-top:10px;">파일 업로드 또는 외부 링크 입력 (둘 중 하나만 선택)</p>
-            <input type="file" id="uploadFile">
-            <input type="text" id="uploadLink" placeholder="또는 외부 링크 URL">
+            <div class="form-group">
+                <label>영상 썸네일 (대표 이미지) - 선택 사항</label>
+                <input type="file" id="uploadThumbnail" accept="image/*" class="thumbnail-input">
+            </div>
+            <div class="form-group">
+                <label>본문 파일 업로드 (여러 개 동시 선택 가능)</label>
+                <input type="file" id="uploadFile" accept="image/*,video/*,application/pdf" multiple>
+                <input type="url" id="uploadLink" placeholder="또는 외부 링크 URL (1개만 입력 가능)">
+            </div>
             <p id="uploadStatus" style="color:blue; font-size:14px; margin-top:10px;"></p>
             <button id="submitUploadBtn" class="btn btn-primary" style="margin:20px 0 0 0; width:100%;">업로드 완료</button>
         </div>

@@ -568,9 +568,45 @@ body {
     border: 1px solid #ccc;
     border-radius: 5px;
 }
+.hidden { display: none !important; }
+
 .close-btn {
     float: right;
     cursor: pointer;
     font-size: 24px;
 }
-.hidden { display: none !important; }
+
+/* 다중 미디어 갤러리 슬라이더 */
+.media-slider {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: 10px;
+    padding: 10px;
+    width: 100%;
+}
+.media-slider::-webkit-scrollbar {
+    height: 8px;
+}
+.media-slider::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+.media-slider::-webkit-scrollbar-thumb {
+    background: var(--secondary-color);
+    border-radius: 4px;
+}
+.media-slide-item {
+    flex: 0 0 100%;
+    scroll-snap-align: center;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+}
+.media-slide-item img, .media-slide-item video {
+    width: 100%;
+    max-height: 300px;
+    object-fit: contain;
+    background: #000;
+    display: block;
+}

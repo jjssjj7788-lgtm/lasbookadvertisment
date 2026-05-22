@@ -141,32 +141,55 @@ document.getElementById('submitUploadBtn').addEventListener('click', async () =>
     const type = document.getElementById('uploadType').value;
     const title = document.getElementById('uploadTitle').value;
     const desc = document.getElementById('uploadDesc').value;
-    const file = document.getElementById('uploadFile').files[0];
+    const files = document.getElementById('uploadFile').files;
+    const thumbnailFile = document.getElementById('uploadThumbnail').files[0];
     const link = document.getElementById('uploadLink').value;
     const status = document.getElementById('uploadStatus');
 
     if (!title) { status.innerText = "제목을 입력해주세요."; return; }
-    if (!file && !link) { status.innerText = "파일을 첨부하거나 링크를 입력해주세요."; return; }
+    if (files.length === 0 && !link) { status.innerText = "파일을 첨부하거나 링크를 입력해주세요."; return; }
 
-    status.innerText = "업로드 중...";
+    status.innerText = "업로드 준비 중...";
     try {
         let finalUrl = link;
+        let mediaArray = [];
+        let thumbnailUrl = null;
+
+        // 썸네일 업로드
+        if (thumbnailFile) {
+            status.innerText = `썸네일 이미지 업로드 중...`;
+            const thumbRef = storage.ref(`gallery/thumb_${Date.now()}_${thumbnailFile.name}`);
+            await thumbRef.put(thumbnailFile);
+            thumbnailUrl = await thumbRef.getDownloadURL();
+        }
         
-        // 파일이 첨부된 경우 Storage에 업로드
-        if (file) {
-            const fileRef = storage.ref(`gallery/${Date.now()}_${file.name}`);
-            const uploadTask = fileRef.put(file);
-            
-            // 업로드 진행률 표시
-            uploadTask.on('state_changed', 
-                (snapshot) => {
-                    const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
-                    status.innerText = `열심히 서버로 전송 중입니다... ${progress}%`;
-                }
-            );
-            
-            await uploadTask;
-            finalUrl = await fileRef.getDownloadURL();
+        // 다중 파일 업로드
+        if (files.length > 0) {
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const fileRef = storage.ref(`gallery/${Date.now()}_${file.name}`);
+                const uploadTask = fileRef.put(file);
+                
+                // 업로드 진행률 표시
+                uploadTask.on('state_changed', 
+                    (snapshot) => {
+                        const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+                        status.innerText = `[${i+1}/${files.length}] 열심히 서버로 전송 중입니다... ${progress}%`;
+                    }
+                );
+                
+                await uploadTask;
+                const url = await fileRef.getDownloadURL();
+                
+                let fileType = 'image';
+                if (file.type.startsWith('video/')) fileType = 'video';
+                else if (file.type.startsWith('audio/')) fileType = 'audio';
+                else if (file.type.startsWith('application/pdf')) fileType = 'doc';
+                
+                mediaArray.push({ url: url, type: fileType });
+            }
+        } else if (link) {
+            mediaArray.push({ url: link, type: type });
         }
 
         // Firestore에 데이터 저장
@@ -175,6 +198,8 @@ document.getElementById('submitUploadBtn').addEventListener('click', async () =>
             title: title,
             desc: desc,
             url: finalUrl,
+            mediaArray: mediaArray,
+            thumbnailUrl: thumbnailUrl,
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
@@ -185,6 +210,7 @@ document.getElementById('submitUploadBtn').addEventListener('click', async () =>
             document.getElementById('uploadTitle').value = "";
             document.getElementById('uploadDesc').value = "";
             document.getElementById('uploadFile').value = "";
+            document.getElementById('uploadThumbnail').value = "";
             document.getElementById('uploadLink').value = "";
         }, 1000);
     } catch (error) {
@@ -216,24 +242,42 @@ db.collection('gallery').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
         const data = doc.data();
         const info = typeInfo[data.type] || typeInfo['link'];
         
-        let mediaHtml = `<a href="${data.url}" class="btn btn-primary" target="_blank" style="margin-top:10px; display:inline-block;">${info.btn}</a>`;
-        
-        if (data.type === 'video') {
-            if (data.url.includes('drive.google.com')) {
-                const previewUrl = data.url.replace(/\/view.*/, '/preview');
-                mediaHtml = `<iframe src="${previewUrl}" width="100%" height="200" style="border:none; border-radius:10px; margin-top:10px;" allowfullscreen></iframe>`;
-            } else if (data.url.includes('youtube.com') || data.url.includes('youtu.be')) {
-                let videoId = "";
-                if (data.url.includes('v=')) videoId = data.url.split('v=')[1].split('&')[0];
-                else if (data.url.includes('youtu.be/')) videoId = data.url.split('youtu.be/')[1].split('?')[0];
-                if (videoId) mediaHtml = `<iframe src="https://www.youtube.com/embed/${videoId}" width="100%" height="200" style="border:none; border-radius:10px; margin-top:10px;" allowfullscreen></iframe>`;
+        function renderMedia(media, thumb, defaultBtnText) {
+            if (media.type === 'video' || (media.url && media.url.match(/\.(mp4|webm)$/i))) {
+                if (media.url.includes('drive.google.com')) {
+                    const previewUrl = media.url.replace(/\/view.*/, '/preview');
+                    return `<iframe src="${previewUrl}" width="100%" height="200" style="border:none; border-radius:10px; margin-top:10px;" allowfullscreen></iframe>`;
+                } else if (media.url.includes('youtube.com') || media.url.includes('youtu.be')) {
+                    let videoId = "";
+                    if (media.url.includes('v=')) videoId = media.url.split('v=')[1].split('&')[0];
+                    else if (media.url.includes('youtu.be/')) videoId = media.url.split('youtu.be/')[1].split('?')[0];
+                    if (videoId) return `<iframe src="https://www.youtube.com/embed/${videoId}" width="100%" height="200" style="border:none; border-radius:10px; margin-top:10px;" allowfullscreen></iframe>`;
+                } else {
+                    let posterAttr = thumb ? `poster="${thumb}"` : '';
+                    return `<video src="${media.url}" ${posterAttr} controls width="100%" style="border-radius:10px; margin-top:10px; max-height:300px; background:#000;"></video>`;
+                }
+            } else if (media.type === 'image' || (media.url && media.url.match(/\.(jpeg|jpg|gif|png)$/i))) {
+                return `<img src="${media.url}" width="100%" style="border-radius:10px; margin-top:10px; max-height:300px; object-fit:contain; background:#f9f9f9;">`;
+            } else if (media.type === 'audio' || (media.url && media.url.match(/\.(mp3|wav|ogg)$/i))) {
+                return `<audio src="${media.url}" controls style="width:100%; margin-top:10px;"></audio>`;
             } else {
-                mediaHtml = `<video src="${data.url}" controls width="100%" style="border-radius:10px; margin-top:10px; max-height:200px; background:#000;"></video>`;
+                return `<a href="${media.url}" class="btn btn-primary" target="_blank" style="margin-top:10px; display:inline-block;">${defaultBtnText}</a>`;
             }
-        } else if (data.type === 'image') {
-            mediaHtml = `<img src="${data.url}" width="100%" style="border-radius:10px; margin-top:10px; max-height:200px; object-fit:contain; background:#f9f9f9;">`;
-        } else if (data.type === 'audio') {
-            mediaHtml = `<audio src="${data.url}" controls style="width:100%; margin-top:10px;"></audio>`;
+        }
+
+        let mediaHtml = '';
+        if (data.mediaArray && data.mediaArray.length > 0) {
+            if (data.mediaArray.length === 1) {
+                mediaHtml = renderMedia(data.mediaArray[0], data.thumbnailUrl, info.btn);
+            } else {
+                mediaHtml = `<div class="media-slider">`;
+                data.mediaArray.forEach(media => {
+                    mediaHtml += `<div class="media-slide-item">${renderMedia(media, data.thumbnailUrl, info.btn)}</div>`;
+                });
+                mediaHtml += `</div>`;
+            }
+        } else {
+            mediaHtml = renderMedia({ url: data.url, type: data.type }, data.thumbnailUrl, info.btn);
         }
         
         const itemHtml = `
