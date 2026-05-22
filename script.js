@@ -548,23 +548,28 @@ function openDetailModal(docId) {
         else if (isVideoItem) {
             return `<video src="${media.url}" controls controlsList="nodownload" oncontextmenu="return false;" ${idx === 0 ? 'autoplay' : ''} style="width:100%; height:100%; object-fit:contain;"></video>`;
         } 
-        // 문서 파일인 경우 (다운로드 방지 및 읽기 전용 뷰어)
+        // 문서 파일인 경우 (다운로드 방지 및 풀스크린 뷰어)
         else if (isDocItem) {
-            let viewerUrl = media.url;
-            // PDF인 경우 브라우저 뷰어를 쓰되 다운로드/인쇄 툴바 차단 (#toolbar=0)
-            if (media.url.match(/\.(pdf)/i)) {
-                viewerUrl = media.url + '#toolbar=0&navpanes=0';
-            } else {
-                // Word, Excel, PPT 등은 구글 뷰어로 임베드 (다운로드 방지 효과)
-                viewerUrl = `https://docs.google.com/gview?url=${encodeURIComponent(media.url)}&embedded=true`;
+            let thumbUrl = data.thumbnailUrl || '';
+            if (!thumbUrl && items.length > 1) {
+                const imgMedia = items.find(i => i.type === 'image' || (i.url && i.url.match(/\.(jpeg|jpg|gif|png|webp)/i)));
+                if (imgMedia) thumbUrl = imgMedia.url;
             }
+            
+            let displayHtml = thumbUrl ? 
+                `<img src="${thumbUrl}" style="max-height:60%; max-width:80%; object-fit:contain; margin-bottom:20px; box-shadow:0 4px 12px rgba(0,0,0,0.1);" />` : 
+                `<div style="font-size:64px; margin-bottom:20px;">📄</div>`;
+
+            // 모바일 브라우저 강제 다운로드 방지를 위해 모든 문서를 Google Docs Viewer로 처리
+            let viewerUrl = `https://docs.google.com/gview?url=${encodeURIComponent(media.url)}&embedded=true`;
 
             return `
-                <div style="width:100%; height:100%; display:flex; flex-direction:column; background:#f8f9fa;">
-                    <div style="width:100%; background:#212529; color:#fff; padding:10px 15px; font-size:13px; font-weight:bold; box-sizing:border-box;">
-                        📄 문서 읽기 모드 (보안 문서는 다운로드할 수 없습니다)
-                    </div>
-                    <iframe src="${viewerUrl}" style="width:100%; flex-grow:1; border:none;" oncontextmenu="return false;"></iframe>
+                <div style="width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#f8f9fa;">
+                    ${displayHtml}
+                    <button onclick="openFullscreenViewer('${viewerUrl}')" style="background:var(--blue); color:white; padding:14px 28px; border-radius:30px; border:none; font-weight:bold; font-size:16px; box-shadow:0 4px 12px rgba(0,0,0,0.15); cursor:pointer; transition:transform 0.2s;">
+                        📖 전체 화면으로 넓게 읽기
+                    </button>
+                    <p style="margin-top:14px; font-size:13px; color:#777; font-weight:600;">보안 문서는 다운로드할 수 없습니다.</p>
                 </div>
             `;
         }
@@ -615,6 +620,28 @@ if (detailModal) {
             detailMediaArea.innerHTML = "";
         }
     });
+}
+
+// ============ 풀스크린 문서 뷰어 ============
+function openFullscreenViewer(url) {
+    let viewer = document.getElementById('fullscreenViewer');
+    if (!viewer) {
+        viewer = document.createElement('div');
+        viewer.id = 'fullscreenViewer';
+        viewer.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; z-index:999999; background:#fff; display:flex; flex-direction:column;';
+        viewer.innerHTML = `
+            <div style="height:60px; background:#212529; color:white; display:flex; justify-content:space-between; align-items:center; padding:0 20px;">
+                <span style="font-weight:bold; font-size:16px;">📄 보안 문서 읽기 모드</span>
+                <button onclick="document.getElementById('fullscreenViewer').style.display='none'" style="background:none; border:none; color:white; font-size:32px; cursor:pointer; line-height:1;">&times;</button>
+            </div>
+            <iframe id="fullscreenIframe" style="flex-grow:1; width:100%; border:none;" oncontextmenu="return false;"></iframe>
+        `;
+        document.body.appendChild(viewer);
+    }
+    
+    // 로딩 시마다 iframe src 업데이트
+    document.getElementById('fullscreenIframe').src = url;
+    viewer.style.display = 'flex';
 }
 
 // ============ 보안 설정 (다운로드 및 캡처 방지) ============
