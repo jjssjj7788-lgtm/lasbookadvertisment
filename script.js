@@ -293,14 +293,15 @@ function createCard(doc, data) {
     
     // 오디오 파일이 있으면 카드 내용(card-body) 안에 플레이어 직접 생성
     let audioPlayersHtml = '';
-    if (data.mediaArray && data.mediaArray.length > 0) {
-        data.mediaArray.forEach((media) => {
-            if (media.type === 'audio' || (media.url && media.url.match(/\.(mp3|wav|ogg|m4a)$/i))) {
+    if (isAudio) {
+        if (data.mediaArray && data.mediaArray.length > 0) {
+            data.mediaArray.forEach((media) => {
+                // 파이어베이스 예전 데이터나 확장자가 없는 URL도 무조건 오디오 플레이어로 강제 렌더링
                 audioPlayersHtml += `<audio controls src="${media.url}" style="width:100%; height:36px; margin-top:8px; border-radius:6px;"></audio>`;
-            }
-        });
-    } else if (data.url && (isAudio || data.url.match(/\.(mp3|wav|ogg|m4a)$/i))) {
-        audioPlayersHtml = `<audio controls src="${data.url}" style="width:100%; height:36px; margin-top:8px; border-radius:6px;"></audio>`;
+            });
+        } else if (data.url) {
+            audioPlayersHtml = `<audio controls src="${data.url}" style="width:100%; height:36px; margin-top:8px; border-radius:6px;"></audio>`;
+        }
     }
     
     let adminControls = `
