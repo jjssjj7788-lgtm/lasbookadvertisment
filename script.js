@@ -209,28 +209,65 @@ function getCardBadge(tags) {
     return "MEDIA";
 }
 
-function getCardMediaHtml(data, isVideo, isAudio) {
-    let url = data.thumbnailUrl;
-    if (!url && data.mediaArray && data.mediaArray.length > 0) {
-        url = data.mediaArray[0].url;
-    }
-    if (!url) url = data.url;
-
+function getCardMediaHtml(data, isVideo, isAudio, docId) {
     if (isAudio) {
         return `<div class="wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>`;
     }
     
-    if (url) {
-        if (isVideo || (url.match(/\.(mp4|webm)$/i))) {
-             if (data.thumbnailUrl) {
-                 return `<img class="real-img" src="${data.thumbnailUrl}" />`;
-             }
-             return `<video class="real-video" src="${url}" preload="metadata"></video>`;
-        } else if (url.match(/\.(jpeg|jpg|gif|png)$/i)) {
-             return `<img class="real-img" src="${url}" />`;
+    // 단일 미디어 또는 옛날 데이터 (mediaArray 없음)
+    if (!data.mediaArray || data.mediaArray.length <= 1) {
+        let url = data.thumbnailUrl;
+        let mainMediaUrl = data.url;
+        if (data.mediaArray && data.mediaArray.length === 1) {
+            if (!url) url = data.mediaArray[0].url;
+            mainMediaUrl = data.mediaArray[0].url;
+        } else if (!url) {
+            url = data.url;
         }
+
+        if (url) {
+            if (isVideo || (url.match(/\.(mp4|webm)$/i))) {
+                 if (data.thumbnailUrl) {
+                     return `<img class="real-img" src="${data.thumbnailUrl}" onclick="window.open('${mainMediaUrl}', '_blank')" />`;
+                 }
+                 return `<video class="real-video" src="${url}" controls preload="metadata"></video>`;
+            } else if (url.match(/\.(jpeg|jpg|gif|png)$/i)) {
+                 return `<img class="real-img" src="${url}" onclick="window.open('${mainMediaUrl}', '_blank')" />`;
+            }
+        }
+        return `<img class="real-img" src="assets/seal.png" style="object-fit:contain; padding:20px;"/>`;
     }
-    return `<img class="real-img" src="assets/seal.png" style="object-fit:contain; padding:20px;"/>`;
+
+    // 다중 미디어 (슬라이더 적용)
+    let sliderId = 'slider_' + docId;
+    let html = `<div class="media-slider" id="${sliderId}" style="display:flex; width:100%; height:100%; overflow-x:auto; scroll-snap-type: x mandatory; scrollbar-width: none; -ms-overflow-style: none;">`;
+    
+    data.mediaArray.forEach((media, idx) => {
+        let displayUrl = (idx === 0 && data.thumbnailUrl) ? data.thumbnailUrl : media.url;
+        let slideContent = '';
+        if (media.type === 'video' || (displayUrl && displayUrl.match(/\.(mp4|webm)$/i))) {
+            if (data.thumbnailUrl && idx === 0) {
+                slideContent = `<img class="real-img" src="${data.thumbnailUrl}" onclick="window.open('${media.url}', '_blank')"/>`;
+            } else {
+                slideContent = `<video class="real-video" src="${media.url}" controls preload="metadata"></video>`;
+            }
+        } else {
+            slideContent = `<img class="real-img" src="${displayUrl}" onclick="window.open('${media.url}', '_blank')"/>`;
+        }
+        html += `<div style="flex: 0 0 100%; scroll-snap-align: center; position:relative; width:100%; height:100%;">
+                    ${slideContent}
+                 </div>`;
+    });
+    html += `</div>`;
+    
+    // 좌우 화살표 및 장수 뱃지 추가
+    html += `
+        <button class="slider-btn left" onclick="event.stopPropagation(); document.getElementById('${sliderId}').scrollBy({left:-300, behavior:'smooth'})">◀</button>
+        <button class="slider-btn right" onclick="event.stopPropagation(); document.getElementById('${sliderId}').scrollBy({left:300, behavior:'smooth'})">▶</button>
+        <div class="multi-badge" style="position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.7); color:white; padding:4px 8px; border-radius:12px; font-size:11px; font-weight:bold; z-index:10;">${data.mediaArray.length}장</div>
+    `;
+
+    return html;
 }
 
 function createCard(doc, data) {
@@ -238,7 +275,7 @@ function createCard(doc, data) {
     const isAudio = data.tags && data.tags.includes('audio');
     const badgeText = getCardBadge(data.tags || []);
     const dateText = formatDate(data.createdAt);
-    const mediaHtml = getCardMediaHtml(data, isVideo, isAudio);
+    const mediaHtml = getCardMediaHtml(data, isVideo, isAudio, doc.id);
     
     let adminControls = `
         <div class="admin-controls hidden">
@@ -249,15 +286,14 @@ function createCard(doc, data) {
 
     return `
       <article class="card" data-title="${(data.title||'').toLowerCase()}" data-desc="${(data.desc||'').toLowerCase()}">
-        <div class="thumb" onclick="window.open('${data.mediaArray && data.mediaArray[0] ? data.mediaArray[0].url : data.url}', '_blank')">
-          <span class="badge">
+        <div class="thumb">
+          <span class="badge" style="z-index:10;">
             ${isVideo?'<svg style="width:11px;height:11px" viewBox="0 0 24 24" fill="currentColor"><polygon points="6,4 20,12 6,20"/></svg>':''}
             ${isAudio?'<svg style="width:11px;height:11px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3" fill="currentColor"/><circle cx="18" cy="16" r="3" fill="currentColor"/></svg>':''}
             ${!isVideo && !isAudio?'<svg style="width:11px;height:11px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/><polyline points="21 15 16 10 5 21"/></svg>':''}
             ${badgeText}
           </span>
           ${mediaHtml}
-          ${isVideo?`<div class="play"><span></span></div>`:''}
         </div>
         <div class="card-body">
           <div class="card-title">${data.title}</div>
