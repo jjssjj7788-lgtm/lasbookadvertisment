@@ -1,0 +1,29 @@
+# 시스템 파일
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# 편집기
+.vscode/
+.idea/
+*.code-workspace
+
+# Node 모듈 (향후 필요시)
+node_modules/
+npm-debug.log
+
+# 빌드 폴더
+dist/
+build/
+
+# 환경 변수
+.env
+.env.local
+
+# OS
+.AppleDouble
+.AppleDB
+
+# 라스 설정 파일
+라스 설명 세트 1호-20260522T082625Z-3-001.zip
