@@ -522,7 +522,6 @@ function openDetailModal(docId) {
     // 2. 미디어 세팅
     if (!detailMediaArea) return;
     detailMediaArea.innerHTML = '';
-    const isAudio = data.tags && data.tags.includes('audio');
     
     let items = [];
     if (data.mediaArray && data.mediaArray.length > 0) {
@@ -531,42 +530,70 @@ function openDetailModal(docId) {
         items = [{ url: data.url }];
     }
 
+    function renderMediaItem(media, isOnlyItem, idx) {
+        // 정확한 파일 타입 유추
+        let isVideoItem = media.type === 'video' || (media.url && media.url.match(/\.(mp4|webm)$/i));
+        let isAudioItem = media.type === 'audio' || (media.url && media.url.match(/\.(mp3|wav|ogg|m4a)$/i));
+        let isImageItem = media.type === 'image' || (media.url && media.url.match(/\.(jpeg|jpg|gif|png)$/i));
+
+        // URL이나 type으로 확인이 안 되면 태그 기반으로 추측 (단, 이미지가 확실한 경우 우선순위)
+        if (!isVideoItem && !isAudioItem && !isImageItem) {
+            if (data.tags && data.tags.includes('video')) isVideoItem = true;
+            else if (data.tags && data.tags.includes('audio')) isAudioItem = true;
+            else isImageItem = true; // 기본적으로 알 수 없는 링크는 이미지로 시도하거나 iframe? 우선 이미지/텍스트로 처리
+        }
+
+        // 음성 파일인 경우
+        if (isAudioItem) {
+            let thumbUrl = data.thumbnailUrl;
+            // 썸네일이 없고 미디어가 여러 개일 때 이미지가 있다면 그걸 썸네일로 활용
+            if (!thumbUrl && items.length > 1) {
+                const imgMedia = items.find(i => i.type === 'image' || (i.url && i.url.match(/\.(jpeg|jpg|gif|png)$/i)));
+                if (imgMedia) thumbUrl = imgMedia.url;
+            }
+
+            let thumbHtml = thumbUrl ? 
+                `<img src="${thumbUrl}" style="width:100%; height:80%; object-fit:contain; position:absolute; top:0; padding:20px; box-sizing:border-box;" />` : 
+                `<div style="height:100%; width:100%; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg, #2b2b2b, #111);">
+                    <div style="display:flex; gap:6px;">
+                        <i style="width:6px;height:30px;background:#fff;border-radius:3px;animation:wave 1s infinite ease-in-out;"></i>
+                        <i style="width:6px;height:45px;background:#fff;border-radius:3px;animation:wave 1s infinite ease-in-out 0.1s;"></i>
+                        <i style="width:6px;height:25px;background:#fff;border-radius:3px;animation:wave 1s infinite ease-in-out 0.2s;"></i>
+                        <i style="width:6px;height:50px;background:#fff;border-radius:3px;animation:wave 1s infinite ease-in-out 0.3s;"></i>
+                        <i style="width:6px;height:35px;background:#fff;border-radius:3px;animation:wave 1s infinite ease-in-out 0.4s;"></i>
+                    </div>
+                </div>`;
+
+            return `
+                <div style="position:relative; width:100%; height:100%; display:flex; flex-direction:column; justify-content:flex-end;">
+                    ${thumbHtml}
+                    <audio src="${media.url}" controls ${idx === 0 ? 'autoplay' : ''} style="width:100%; height:60px; z-index:10; border-radius:0; background:#f1f3f5; padding:10px; box-sizing:border-box;"></audio>
+                </div>
+            `;
+        } 
+        // 영상 파일인 경우
+        else if (isVideoItem) {
+            return `<video src="${media.url}" controls ${idx === 0 ? 'autoplay' : ''} style="width:100%; height:100%; object-fit:contain;"></video>`;
+        } 
+        // 이미지 및 기타인 경우
+        else {
+            return `<img src="${media.url}" style="width:100%; height:100%; object-fit:contain; cursor:pointer;" onclick="window.open('${media.url}', '_blank')" title="클릭하여 원본 보기"/>`;
+        }
+    }
+
     if (items.length === 0) {
         detailMediaArea.innerHTML = `<img src="assets/seal.png" style="padding:20px; object-fit:contain;"/>`;
     } else if (items.length === 1) {
-        const media = items[0];
-        if (isAudio) {
-            let thumb = data.thumbnailUrl ? `<img src="${data.thumbnailUrl}" style="width:100%; height:80%; object-fit:cover; position:absolute; top:0;" />` : `<div class="wave" style="height:100%; width:100%;"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>`;
-            detailMediaArea.innerHTML = `
-                <div style="position:relative; width:100%; height:100%; display:flex; flex-direction:column; justify-content:flex-end;">
-                    ${thumb}
-                    <audio src="${media.url}" controls autoplay style="width:100%; height:20%; z-index:10; border-radius:0; background:#f1f3f5; padding:10px; box-sizing:border-box;"></audio>
-                </div>
-            `;
-        } else if (media.type === 'video' || (media.url && media.url.match(/\.(mp4|webm)$/i))) {
-            detailMediaArea.innerHTML = `<video src="${media.url}" controls autoplay style="width:100%; height:100%; object-fit:contain;"></video>`;
-        } else {
-            detailMediaArea.innerHTML = `<img src="${media.url}" style="width:100%; height:100%; object-fit:contain;"/>`;
-        }
+        detailMediaArea.innerHTML = renderMediaItem(items[0], true, 0);
     } else {
         // 다중 슬라이더 처리
         let sliderId = 'detailSlider_' + docId;
         let sliderHtml = `<div class="detail-slider" id="${sliderId}">`;
         items.forEach((media, idx) => {
-            if (isAudio) {
-                let thumb = data.thumbnailUrl ? `<img src="${data.thumbnailUrl}" style="width:100%; height:80%; object-fit:cover; position:absolute; top:0;" />` : `<div class="wave" style="height:100%; width:100%;"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>`;
-                sliderHtml += `
-                    <div class="detail-slide-item">
-                        <div style="position:relative; width:100%; height:100%; display:flex; flex-direction:column; justify-content:flex-end;">
-                            ${thumb}
-                            <audio src="${media.url}" controls ${idx===0?'autoplay':''} style="width:100%; height:20%; z-index:10; border-radius:0; background:#f1f3f5; padding:10px; box-sizing:border-box;"></audio>
-                        </div>
-                    </div>`;
-            } else if (media.type === 'video' || (media.url && media.url.match(/\.(mp4|webm)$/i))) {
-                sliderHtml += `<div class="detail-slide-item"><video src="${media.url}" controls ${idx===0?'autoplay':''} style="width:100%; height:100%; object-fit:contain;"></video></div>`;
-            } else {
-                sliderHtml += `<div class="detail-slide-item"><img src="${media.url}" style="width:100%; height:100%; object-fit:contain;"/></div>`;
-            }
+            sliderHtml += `
+                <div class="detail-slide-item">
+                    ${renderMediaItem(media, false, idx)}
+                </div>`;
         });
         sliderHtml += `</div>
             <button class="detail-slider-btn left" onclick="document.getElementById('${sliderId}').scrollBy({left:-500, behavior:'smooth'})">◀</button>
