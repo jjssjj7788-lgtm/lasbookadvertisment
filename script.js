@@ -138,13 +138,17 @@ logoutBtn.addEventListener('click', () => {
 
 // --- 자료 업로드 ---
 document.getElementById('submitUploadBtn').addEventListener('click', async () => {
-    const type = document.getElementById('uploadType').value;
     const title = document.getElementById('uploadTitle').value;
     const desc = document.getElementById('uploadDesc').value;
     const files = document.getElementById('uploadFile').files;
     const thumbnailFile = document.getElementById('uploadThumbnail').files[0];
     const link = document.getElementById('uploadLink').value;
     const status = document.getElementById('uploadStatus');
+
+    // 선택된 태그(뱃지) 가져오기
+    const tagCheckboxes = document.querySelectorAll('input[name="uploadTags"]:checked');
+    let tags = [];
+    tagCheckboxes.forEach(cb => tags.push(cb.value));
 
     if (!title) { status.innerText = "제목을 입력해주세요."; return; }
     if (files.length === 0 && !link) { status.innerText = "파일을 첨부하거나 링크를 입력해주세요."; return; }
@@ -189,12 +193,12 @@ document.getElementById('submitUploadBtn').addEventListener('click', async () =>
                 mediaArray.push({ url: url, type: fileType });
             }
         } else if (link) {
-            mediaArray.push({ url: link, type: type });
+            mediaArray.push({ url: link, type: tags.length > 0 ? tags[0] : 'link' });
         }
 
         // Firestore에 데이터 저장
         await db.collection('gallery').add({
-            type: type,
+            tags: tags,
             title: title,
             desc: desc,
             url: finalUrl,
@@ -212,6 +216,7 @@ document.getElementById('submitUploadBtn').addEventListener('click', async () =>
             document.getElementById('uploadFile').value = "";
             document.getElementById('uploadThumbnail').value = "";
             document.getElementById('uploadLink').value = "";
+            document.querySelectorAll('input[name="uploadTags"]').forEach(cb => cb.checked = false);
         }, 1000);
     } catch (error) {
         status.innerText = "오류 발생: " + error.message;
@@ -274,7 +279,14 @@ db.collection('gallery').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
         let mediaHtml = '';
         let badgesHtml = '';
         
-        if (data.mediaArray && data.mediaArray.length > 0) {
+        if (data.tags && data.tags.length > 0) {
+            if(data.tags.includes('video')) badgesHtml += `<span class="badge video-badge">🎥 영상</span>`;
+            if(data.tags.includes('image')) badgesHtml += `<span class="badge image-badge">🖼️ 이미지</span>`;
+            if(data.tags.includes('audio')) badgesHtml += `<span class="badge audio-badge">🎙️ 음성</span>`;
+            if(data.tags.includes('doc')) badgesHtml += `<span class="badge doc-badge" style="background:#FA8BFF; color:#fff;">📄 문서</span>`;
+            if(data.tags.includes('link')) badgesHtml += `<span class="badge link-badge">🌐 외부 링크</span>`;
+            if(data.tags.includes('poster')) badgesHtml += `<span class="badge poster-badge" style="background:#FFE66D; color:#333;">📋 포스터</span>`;
+        } else if (data.mediaArray && data.mediaArray.length > 0) {
             let hasVideo = data.mediaArray.some(m => m.type === 'video');
             let hasImage = data.mediaArray.some(m => m.type === 'image');
             let hasAudio = data.mediaArray.some(m => m.type === 'audio');
@@ -282,7 +294,7 @@ db.collection('gallery').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
             if(hasImage) badgesHtml += `<span class="badge image-badge">🖼️ 이미지 포함</span>`;
             if(hasAudio) badgesHtml += `<span class="badge audio-badge">🎙️ 음성 포함</span>`;
             if(!hasVideo && !hasImage && !hasAudio) badgesHtml += `<span class="badge link-badge">🌐 첨부파일</span>`;
-        } else {
+        } else if (data.type) {
             if(data.type === 'video') badgesHtml += `<span class="badge video-badge">🎥 영상</span>`;
             else if(data.type === 'image') badgesHtml += `<span class="badge image-badge">🖼️ 이미지</span>`;
             else badgesHtml += `<span class="badge link-badge">🌐 ${info.label}</span>`;

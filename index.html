@@ -157,15 +157,18 @@
         <div class="modal-content">
             <span class="close-btn" id="closeUploadBtn">&times;</span>
             <h2>새 자료 업로드</h2>
-            <select id="uploadType">
-                <option value="image">이미지 (🖼️)</option>
-                <option value="video">영상 (🎥)</option>
-                <option value="audio">음성 (🎙️)</option>
-                <option value="doc">문서 (📄)</option>
-                <option value="link">링크 (🌐)</option>
-                <option value="poster">포스터 (📋)</option>
-            </select>
-            <input type="text" id="uploadTitle" placeholder="제목 (예: 박람회 사진)">
+            <input type="text" id="uploadTitle" placeholder="가장 크게 보일 제목 (예: 상하이 박람회)" style="font-size:18px; font-weight:bold; border:2px solid var(--primary-color);">
+            <div class="form-group" style="margin: 15px 0; background:#f9f9f9; padding:15px; border-radius:10px;">
+                <label style="display:block; margin-bottom:10px; font-weight:bold;">이 게시물의 성격 뱃지 (다중 선택 가능)</label>
+                <div style="display:flex; gap:15px; flex-wrap:wrap; font-size:14px;">
+                    <label style="cursor:pointer;"><input type="checkbox" name="uploadTags" value="video"> 🎥 영상</label>
+                    <label style="cursor:pointer;"><input type="checkbox" name="uploadTags" value="image"> 🖼️ 이미지</label>
+                    <label style="cursor:pointer;"><input type="checkbox" name="uploadTags" value="audio"> 🎙️ 음성</label>
+                    <label style="cursor:pointer;"><input type="checkbox" name="uploadTags" value="doc"> 📄 문서</label>
+                    <label style="cursor:pointer;"><input type="checkbox" name="uploadTags" value="link"> 🌐 외부 링크</label>
+                    <label style="cursor:pointer;"><input type="checkbox" name="uploadTags" value="poster"> 📋 포스터</label>
+                </div>
+            </div>
             <input type="text" id="uploadDesc" placeholder="간단한 설명">
             <div class="form-group">
                 <label>영상 썸네일 (대표 이미지) - 선택 사항</label>
