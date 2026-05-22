@@ -422,6 +422,19 @@ navLinks.forEach(c => c.addEventListener("click", (e) => { e.preventDefault(); a
 
 // 검색 기능
 const input = document.getElementById("searchInput");
+
+// 강제 자동완성 방지 (크롬 등 브라우저가 멋대로 이메일을 채워넣는 것을 0.1초 뒤에 강제로 지워버림)
+setTimeout(() => {
+    if (input && input.value.includes('@')) {
+        input.value = '';
+    }
+}, 100);
+setTimeout(() => {
+    if (input && input.value.includes('@')) {
+        input.value = '';
+    }
+}, 500);
+
 input.addEventListener("input", () => {
     const q = input.value.trim().toLowerCase();
     document.querySelectorAll(".card, .doc-row").forEach(el => {
