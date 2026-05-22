@@ -540,36 +540,37 @@ function openDetailModal(docId) {
             return `
                 <div style="position:relative; width:100%; height:100%; display:flex; flex-direction:column; justify-content:flex-end;">
                     ${thumbHtml}
-                    <audio src="${media.url}" controls ${idx === 0 ? 'autoplay' : ''} style="width:100%; height:60px; z-index:10; border-radius:0; background:#f1f3f5; padding:10px; box-sizing:border-box;"></audio>
+                    <audio src="${media.url}" controls controlsList="nodownload" ${idx === 0 ? 'autoplay' : ''} style="width:100%; height:60px; z-index:10; border-radius:0; background:#f1f3f5; padding:10px; box-sizing:border-box;"></audio>
                 </div>
             `;
         } 
-        // 영상 파일인 경우
+        // 영상 파일인 경우 (controlsList 추가하여 다운로드 버튼 숨김, 우클릭 차단)
         else if (isVideoItem) {
-            return `<video src="${media.url}" controls ${idx === 0 ? 'autoplay' : ''} style="width:100%; height:100%; object-fit:contain;"></video>`;
+            return `<video src="${media.url}" controls controlsList="nodownload" oncontextmenu="return false;" ${idx === 0 ? 'autoplay' : ''} style="width:100%; height:100%; object-fit:contain;"></video>`;
         } 
-        // 문서 파일인 경우
+        // 문서 파일인 경우 (다운로드 방지 및 읽기 전용 뷰어)
         else if (isDocItem) {
-            let thumbUrl = data.thumbnailUrl || '';
-            if (!thumbUrl && items.length > 1) {
-                const imgMedia = items.find(i => i.type === 'image' || (i.url && i.url.match(/\.(jpeg|jpg|gif|png|webp)/i)));
-                if (imgMedia) thumbUrl = imgMedia.url;
+            let viewerUrl = media.url;
+            // PDF인 경우 브라우저 뷰어를 쓰되 다운로드/인쇄 툴바 차단 (#toolbar=0)
+            if (media.url.match(/\.(pdf)/i)) {
+                viewerUrl = media.url + '#toolbar=0&navpanes=0';
+            } else {
+                // Word, Excel, PPT 등은 구글 뷰어로 임베드 (다운로드 방지 효과)
+                viewerUrl = `https://docs.google.com/gview?url=${encodeURIComponent(media.url)}&embedded=true`;
             }
-            
-            let displayHtml = thumbUrl ? 
-                `<img src="${thumbUrl}" style="max-height:60%; max-width:80%; object-fit:contain; margin-bottom:20px; box-shadow:0 4px 12px rgba(0,0,0,0.1);" />` : 
-                `<div style="font-size:64px; margin-bottom:20px;">📄</div>`;
 
             return `
-                <div style="width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#f8f9fa;">
-                    ${displayHtml}
-                    <a href="${media.url}" target="_blank" style="background:var(--blue); color:white; padding:12px 24px; border-radius:30px; text-decoration:none; font-weight:bold; font-size:16px; box-shadow:0 4px 12px rgba(0,0,0,0.15); transition:transform 0.2s;">문서 열기 / 다운로드</a>
+                <div style="width:100%; height:100%; display:flex; flex-direction:column; background:#f8f9fa;">
+                    <div style="width:100%; background:#212529; color:#fff; padding:10px 15px; font-size:13px; font-weight:bold; box-sizing:border-box;">
+                        📄 문서 읽기 모드 (보안 문서는 다운로드할 수 없습니다)
+                    </div>
+                    <iframe src="${viewerUrl}" style="width:100%; flex-grow:1; border:none;" oncontextmenu="return false;"></iframe>
                 </div>
             `;
         }
-        // 이미지 및 기타인 경우
+        // 이미지 및 기타인 경우 (새 창 열기 클릭 이벤트 제거, 드래그 차단)
         else {
-            return `<img src="${media.url}" style="width:100%; height:100%; object-fit:contain; cursor:pointer;" onclick="window.open('${media.url}', '_blank')" title="클릭하여 원본 보기"/>`;
+            return `<img src="${media.url}" oncontextmenu="return false;" draggable="false" style="width:100%; height:100%; object-fit:contain; pointer-events:none;" />`;
         }
     }
 
@@ -615,3 +616,27 @@ if (detailModal) {
         }
     });
 }
+
+// ============ 보안 설정 (다운로드 및 캡처 방지) ============
+// 우클릭 차단
+document.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+});
+
+// 키보드 단축키 차단 (F12, Ctrl+Shift+I, Ctrl+Shift+C, Ctrl+Shift+J, Ctrl+U 등)
+document.addEventListener('keydown', function(e) {
+    // F12
+    if (e.key === 'F12' || e.keyCode === 123) {
+        e.preventDefault();
+    }
+    
+    // Ctrl 관련 단축키 (Mac의 경우 Cmd 지원을 위해 metaKey 추가 고려)
+    if (e.ctrlKey || e.metaKey) {
+        const key = e.key ? e.key.toLowerCase() : String.fromCharCode(e.keyCode).toLowerCase();
+        
+        // 개발자 도구 (I, C, J), 소스보기 (U), 저장 (S), 인쇄 (P)
+        if (['i', 'c', 'j', 'u', 's', 'p'].includes(key) || (e.shiftKey && ['i', 'c', 'j'].includes(key))) {
+            e.preventDefault();
+        }
+    }
+});
