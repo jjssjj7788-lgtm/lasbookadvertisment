@@ -3,133 +3,219 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>라스북 선물 꾸러미</title>
+    <title>LASBOOK 미디어 허브 · LAS VENTURE</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <!-- 헤더 -->
-    <header class="header">
-        <div class="container" style="position:relative;">
-            <div class="logo" style="position:relative; z-index:20;">
-                <h1>라스북 선물 꾸러미</h1>
-                <p class="tagline">보급자의 수익 창출, 학부모의 혜택 극대화</p>
-            </div>
-            <!-- 귀여운 캐릭터들 (둥둥 떠다님) -->
-            <img src="assets/seal.png" class="cute-char char-seal" alt="보라색 물개">
-            <img src="assets/rabbit.png" class="cute-char char-rabbit" alt="핑크색 토끼">
-            <img src="assets/monkey.png" class="cute-char char-monkey" alt="초록색 원숭이">
-            <img src="assets/fox.jpg" class="cute-char char-fox" alt="노란색 여우">
-        </div>
-    </header>
 
-    <!-- 귀여운 단체 사진 배너 -->
-    <div style="max-width:800px; margin: -20px auto 30px; padding: 0 20px; text-align:center; position:relative; z-index:10;">
-        <img src="assets/group.jpg" alt="캐릭터 단체 사진" style="width:100%; border-radius: 20px; box-shadow: 0 15px 30px rgba(0,0,0,0.15); border: 5px solid white;">
+<!-- ============ NAV ============ -->
+<nav class="nav">
+  <div class="nav-inner">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <strong>LASBOOK</strong>
+        <span>MEDIA HUB</span>
+      </div>
     </div>
-
-
-    <!-- 자료실 섹션 -->
-    <section id="gallery" class="gallery">
-        <div class="container">
-            <h2 class="section-title">자료실</h2>
-            <p class="section-subtitle">라스북의 다양한 자료를 한 곳에서 만나보세요</p>
-            
-            <div style="text-align: right; margin-bottom: 20px;">
-                <button id="openUploadBtn" class="btn btn-primary hidden" style="margin:0;">새 자료 업로드</button>
-                <button id="logoutBtn" class="btn btn-secondary hidden" style="margin:0 0 0 10px;">로그아웃</button>
-            </div>
-            
-            <div class="gallery-grid" id="dynamicGallery">
-                <p style="text-align:center; grid-column: 1 / -1; color:#999; padding: 40px;">자료를 불러오는 중입니다...</p>
-            </div>
-        </div>
-    </section>
-
-
-
-
-    <!-- 푸터 -->
-    <footer class="footer">
-        <div class="container">
-            <p>&copy; 2026 라스북(Rasbook). 모든 권리 보유. <a href="#" id="openLoginBtn" style="color:#aaa; text-decoration:none; margin-left:20px;">[관리자]</a></p>
-        </div>
-    </footer>
-
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-storage-compat.js"></script>
-
-    <!-- 관리자 로그인 모달 -->
-    <div id="loginModal" class="modal">
-        <div class="modal-content">
-            <span class="close-btn" id="closeLoginBtn">&times;</span>
-            <h2>관리자 로그인</h2>
-            <input type="email" id="adminEmail" placeholder="이메일 (관리자 계정)">
-            <input type="password" id="adminPassword" placeholder="비밀번호">
-            <p id="loginError" style="color:red; font-size:14px; margin-top:10px;"></p>
-            <button id="loginBtn" class="btn btn-primary" style="margin:20px 0 0 0; width:100%;">로그인</button>
-        </div>
+    <div class="nav-menu">
+      <a href="#" class="nav-link-item active" data-cat="all">홈</a>
+      <a href="#" class="nav-link-item" data-cat="video">영상</a>
+      <a href="#" class="nav-link-item" data-cat="audio">음성</a>
+      <a href="#" class="nav-link-item" data-cat="image">이미지</a>
+      <a href="#" class="nav-link-item" data-cat="doc">문서</a>
     </div>
-
-    <!-- 새 자료 업로드 모달 -->
-    <div id="uploadModal" class="modal">
-        <div class="modal-content">
-            <span class="close-btn" id="closeUploadBtn">&times;</span>
-            <h2>새 자료 업로드</h2>
-            <input type="text" id="uploadTitle" placeholder="가장 크게 보일 제목 (예: 상하이 박람회)" style="font-size:18px; font-weight:bold; border:2px solid var(--primary-color);">
-            <div class="form-group" style="margin: 15px 0; background:#f9f9f9; padding:15px; border-radius:10px;">
-                <label style="display:block; margin-bottom:10px; font-weight:bold;">이 게시물의 성격 뱃지 (다중 선택 가능)</label>
-                <div style="display:flex; gap:15px; flex-wrap:wrap; font-size:14px;">
-                    <label style="cursor:pointer;"><input type="checkbox" name="uploadTags" value="video"> 🎥 영상</label>
-                    <label style="cursor:pointer;"><input type="checkbox" name="uploadTags" value="image"> 🖼️ 이미지</label>
-                    <label style="cursor:pointer;"><input type="checkbox" name="uploadTags" value="audio"> 🎙️ 음성</label>
-                    <label style="cursor:pointer;"><input type="checkbox" name="uploadTags" value="doc"> 📄 문서</label>
-                    <label style="cursor:pointer;"><input type="checkbox" name="uploadTags" value="link"> 🌐 외부 링크</label>
-                    <label style="cursor:pointer;"><input type="checkbox" name="uploadTags" value="poster"> 📋 포스터</label>
-                </div>
-            </div>
-            <input type="text" id="uploadDesc" placeholder="간단한 설명">
-            <div class="form-group">
-                <label>영상 썸네일 (대표 이미지) - 선택 사항</label>
-                <input type="file" id="uploadThumbnail" accept="image/*" class="thumbnail-input">
-            </div>
-            <div class="form-group">
-                <label>본문 파일 업로드 (여러 개 동시 선택 가능)</label>
-                <input type="file" id="uploadFile" accept="image/*,video/*,application/pdf" multiple>
-                <input type="url" id="uploadLink" placeholder="또는 외부 링크 URL (1개만 입력 가능)">
-            </div>
-            <p id="uploadStatus" style="color:blue; font-size:14px; margin-top:10px;"></p>
-            <button id="submitUploadBtn" class="btn btn-primary" style="margin:20px 0 0 0; width:100%;">업로드 완료</button>
-        </div>
+    <div class="nav-cta">
+        <button id="logoutBtn" class="pill hidden">로그아웃</button>
+        <button id="openUploadBtn" class="pill solid hidden">새 자료 업로드</button>
+        <button id="openLoginBtn" class="pill solid">관리자 로그인</button>
     </div>
+  </div>
+</nav>
 
-    <!-- 자료 수정 모달 -->
-    <div id="editModal" class="modal">
-        <div class="modal-content">
-            <span class="close-btn" id="closeEditBtn">&times;</span>
-            <h2>자료 수정하기</h2>
-            <input type="hidden" id="editDocId">
-            <input type="text" id="editTitle" placeholder="가장 크게 보일 제목 (예: 상하이 박람회)" style="font-size:18px; font-weight:bold; border:2px solid var(--primary-color);">
-            <div class="form-group" style="margin: 15px 0; background:#f9f9f9; padding:15px; border-radius:10px;">
-                <label style="display:block; margin-bottom:10px; font-weight:bold;">이 게시물의 성격 뱃지 (다중 선택 가능)</label>
-                <div style="display:flex; gap:15px; flex-wrap:wrap; font-size:14px;">
-                    <label style="cursor:pointer;"><input type="checkbox" name="editTags" value="video"> 🎥 영상</label>
-                    <label style="cursor:pointer;"><input type="checkbox" name="editTags" value="image"> 🖼️ 이미지</label>
-                    <label style="cursor:pointer;"><input type="checkbox" name="editTags" value="audio"> 🎙️ 음성</label>
-                    <label style="cursor:pointer;"><input type="checkbox" name="editTags" value="doc"> 📄 문서</label>
-                    <label style="cursor:pointer;"><input type="checkbox" name="editTags" value="link"> 🌐 외부 링크</label>
-                    <label style="cursor:pointer;"><input type="checkbox" name="editTags" value="poster"> 📋 포스터</label>
-                </div>
-            </div>
-            <input type="text" id="editDesc" placeholder="간단한 설명">
-            <p style="font-size:12px; color:#666; margin-top:10px;">* 첨부파일이나 썸네일을 바꾸려면 이 글을 삭제하고 새로 업로드해주세요.</p>
-            <p id="editStatus" style="color:blue; font-size:14px; margin-top:10px;"></p>
-            <button id="submitEditBtn" class="btn btn-secondary" style="margin:20px 0 0 0; width:100%;">수정 완료</button>
-        </div>
+<!-- ============ HERO ============ -->
+<section class="hero">
+  <div class="hero-card">
+    <div>
+      <div class="hero-tags">
+        <span class="tag t-mint">● LIVE 업데이트</span>
+        <span class="tag t-pink">실시간 자료 연동</span>
+      </div>
+      <h1>관찰하고 질문하며,<br/>스스로 발견하는 <em>이야기.</em></h1>
+      <p>라스북의 모든 영상·음성·이미지 자료를 한 곳에서. 라스 벤처 친구들과 함께, 필요한 회사 자료를 빠르게 찾아보세요.</p>
+      <div class="hero-stats">
+        <div class="stat"><div class="n" id="stat-video">0</div><div class="l">영상 VIDEOS</div></div>
+        <div class="stat"><div class="n" id="stat-audio">0</div><div class="l">음성 AUDIO</div></div>
+        <div class="stat"><div class="n" id="stat-image">0</div><div class="l">이미지 IMAGES</div></div>
+        <div class="stat"><div class="n" id="stat-doc">0</div><div class="l">문서 DOCS</div></div>
+      </div>
     </div>
+    <div class="hero-art">
+      <div class="char c-gomgom"><img src="assets/seal.png" alt="물개"/></div>
+      <div class="char c-mong"><img src="assets/monkey.png" alt="원숭이"/></div>
+      <div class="char c-lookie"><img src="assets/rabbit.png" alt="토끼"/></div>
+      <div class="char c-fixx"><img src="assets/fox.jpg" alt="여우"/></div>
+      <div class="char c-dig"><img src="assets/group.jpg" alt="단체"/></div>
+    </div>
+  </div>
+</section>
 
-    <script src="script.js"></script>
+<!-- ============ TOOLBAR ============ -->
+<div class="toolbar">
+  <div class="search">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+    <input type="text" id="searchInput" placeholder="자료 제목, 설명, 태그로 검색해보세요"/>
+  </div>
+  <button class="sort">
+    <svg style="width:14px;height:14px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
+    최신순
+  </button>
+</div>
+
+<!-- ============ CATEGORY CHIPS ============ -->
+<div class="cats" id="cats">
+  <button class="chip active" data-cat="all"><span class="dot"></span>전체 <span class="count" id="chip-all">0</span></button>
+  <button class="chip" data-cat="video"><span class="dot" style="background:#1f5fbf"></span>영상 <span class="count" id="chip-video">0</span></button>
+  <button class="chip" data-cat="audio"><span class="dot" style="background:#a165d4"></span>음성 <span class="count" id="chip-audio">0</span></button>
+  <button class="chip" data-cat="image"><span class="dot" style="background:#ff9bb8"></span>이미지 <span class="count" id="chip-image">0</span></button>
+  <button class="chip" data-cat="doc"><span class="dot" style="background:#ff9a3d"></span>문서 <span class="count" id="chip-doc">0</span></button>
+</div>
+
+<!-- ============ MAIN GRID ============ -->
+<main class="grid-wrap">
+  <p id="loadingText" style="text-align:center; color:#999; padding: 40px;">자료를 불러오는 중입니다...</p>
+
+  <!-- VIDEOS -->
+  <div class="section-head" data-section="video" style="display:none;">
+    <h2><span class="ico" style="background:var(--blue-soft);color:var(--blue)">
+      <svg style="width:16px;height:16px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+    </span>회사 영상 자료</h2>
+  </div>
+  <div class="grid" id="grid-video" style="display:none;"></div>
+
+  <!-- AUDIO -->
+  <div class="section-head" data-section="audio" style="display:none;">
+    <h2><span class="ico" style="background:var(--purple-soft);color:var(--purple)">
+      <svg style="width:16px;height:16px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+    </span>회사 음성 자료</h2>
+  </div>
+  <div class="grid" id="grid-audio" style="display:none;"></div>
+
+  <!-- IMAGES -->
+  <div class="section-head" data-section="image" style="display:none;">
+    <h2><span class="ico" style="background:var(--pink-soft);color:#d05478">
+      <svg style="width:16px;height:16px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+    </span>회사 이미지 자료</h2>
+  </div>
+  <div class="grid" id="grid-image" style="display:none;"></div>
+
+  <!-- DOCUMENTS -->
+  <div class="section-head" data-section="doc" style="margin-top:34px; display:none;">
+    <h2><span class="ico" style="background:var(--orange-soft);color:#cc6f1c">
+      <svg style="width:16px;height:16px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+    </span>회사 문서 자료</h2>
+  </div>
+  <div class="doc-list" id="grid-doc" style="display:none;"></div>
+</main>
+
+<!-- ============ FOOTER ============ -->
+<footer>
+  <div class="foot">
+    <div class="foot-left">
+      <div class="brand-mark" style="width:28px;height:28px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+        </svg>
+      </div>
+      © 2026 LASBOOK · The Smart Education
+    </div>
+  </div>
+</footer>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-storage-compat.js"></script>
+
+<!-- 관리자 로그인 모달 -->
+<div id="loginModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" id="closeLoginBtn">&times;</span>
+        <h2>관리자 로그인</h2>
+        <input type="email" id="adminEmail" placeholder="이메일 (관리자 계정)">
+        <input type="password" id="adminPassword" placeholder="비밀번호">
+        <p id="loginError" style="color:red; font-size:14px; margin-top:10px;"></p>
+        <button id="loginBtn" class="pill solid" style="margin:20px 0 0 0; width:100%; text-align:center;">로그인</button>
+    </div>
+</div>
+
+<!-- 새 자료 업로드 모달 -->
+<div id="uploadModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" id="closeUploadBtn">&times;</span>
+        <h2>새 자료 업로드</h2>
+        <input type="text" id="uploadTitle" placeholder="가장 크게 보일 제목 (예: 상하이 박람회)" style="font-size:18px; font-weight:bold; border:2px solid var(--primary-color);">
+        <div style="margin: 15px 0; background:var(--bg); padding:15px; border-radius:10px;">
+            <label style="display:block; margin-bottom:10px; font-weight:bold;">이 게시물의 성격 뱃지 (다중 선택 가능)</label>
+            <div class="tags-checkboxes">
+                <label><input type="checkbox" name="uploadTags" value="video" style="width:auto; margin:0 5px 0 0;"> <span>🎥 영상</span></label>
+                <label><input type="checkbox" name="uploadTags" value="image" style="width:auto; margin:0 5px 0 0;"> <span>🖼️ 이미지</span></label>
+                <label><input type="checkbox" name="uploadTags" value="audio" style="width:auto; margin:0 5px 0 0;"> <span>🎙️ 음성</span></label>
+                <label><input type="checkbox" name="uploadTags" value="doc" style="width:auto; margin:0 5px 0 0;"> <span>📄 문서</span></label>
+                <label><input type="checkbox" name="uploadTags" value="link" style="width:auto; margin:0 5px 0 0;"> <span>🌐 외부 링크</span></label>
+                <label><input type="checkbox" name="uploadTags" value="poster" style="width:auto; margin:0 5px 0 0;"> <span>📋 포스터</span></label>
+            </div>
+        </div>
+        <textarea id="uploadDesc" placeholder="간단한 설명" rows="3"></textarea>
+        <div style="margin-top:15px;">
+            <label style="font-weight:bold;">영상 썸네일 (대표 이미지) - 선택 사항</label>
+            <input type="file" id="uploadThumbnail" accept="image/*">
+        </div>
+        <div style="margin-top:15px;">
+            <label style="font-weight:bold;">본문 파일 업로드 (여러 개 동시 선택 가능)</label>
+            <input type="file" id="uploadFile" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip" multiple>
+            <input type="url" id="uploadLink" placeholder="또는 외부 링크 URL (1개만 입력 가능)">
+        </div>
+        <p id="uploadStatus" style="color:var(--mint); font-weight:bold; font-size:14px; margin-top:10px;"></p>
+        <button id="submitUploadBtn" class="pill solid" style="margin:20px 0 0 0; width:100%; text-align:center;">업로드 완료</button>
+    </div>
+</div>
+
+<!-- 자료 수정 모달 -->
+<div id="editModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" id="closeEditBtn">&times;</span>
+        <h2>자료 수정하기</h2>
+        <input type="hidden" id="editDocId">
+        <input type="text" id="editTitle" placeholder="가장 크게 보일 제목" style="font-size:18px; font-weight:bold; border:2px solid var(--primary-color);">
+        <div style="margin: 15px 0; background:var(--bg); padding:15px; border-radius:10px;">
+            <label style="display:block; margin-bottom:10px; font-weight:bold;">이 게시물의 성격 뱃지 (다중 선택 가능)</label>
+            <div class="tags-checkboxes">
+                <label><input type="checkbox" name="editTags" value="video" style="width:auto; margin:0 5px 0 0;"> <span>🎥 영상</span></label>
+                <label><input type="checkbox" name="editTags" value="image" style="width:auto; margin:0 5px 0 0;"> <span>🖼️ 이미지</span></label>
+                <label><input type="checkbox" name="editTags" value="audio" style="width:auto; margin:0 5px 0 0;"> <span>🎙️ 음성</span></label>
+                <label><input type="checkbox" name="editTags" value="doc" style="width:auto; margin:0 5px 0 0;"> <span>📄 문서</span></label>
+                <label><input type="checkbox" name="editTags" value="link" style="width:auto; margin:0 5px 0 0;"> <span>🌐 외부 링크</span></label>
+                <label><input type="checkbox" name="editTags" value="poster" style="width:auto; margin:0 5px 0 0;"> <span>📋 포스터</span></label>
+            </div>
+        </div>
+        <textarea id="editDesc" placeholder="간단한 설명" rows="3"></textarea>
+        <p style="font-size:12px; color:var(--ink-3); margin-top:10px;">* 첨부파일이나 썸네일을 바꾸려면 이 글을 삭제하고 새로 업로드해주세요.</p>
+        <p id="editStatus" style="color:var(--mint); font-weight:bold; font-size:14px; margin-top:10px;"></p>
+        <button id="submitEditBtn" class="pill solid" style="margin:20px 0 0 0; width:100%; text-align:center;">수정 완료</button>
+    </div>
+</div>
+
+<script src="script.js"></script>
 </body>
 </html>
