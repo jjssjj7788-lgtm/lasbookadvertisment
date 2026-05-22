@@ -211,7 +211,21 @@ function getCardBadge(tags) {
 
 function getCardMediaHtml(data, isVideo, isAudio, docId) {
     if (isAudio) {
-        return `<div class="wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>`;
+        let audioUrl = data.url;
+        if (data.mediaArray && data.mediaArray.length > 0) {
+            audioUrl = data.mediaArray[0].url;
+        }
+        
+        if (data.thumbnailUrl) {
+            return `
+                <img class="real-img" src="${data.thumbnailUrl}" />
+                <div class="wave" onclick="window.open('${audioUrl}', '_blank')" style="position:absolute; inset:0; height:100%; width:100%; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.4); z-index:2; cursor:pointer;" title="새 창에서 듣기">
+                    <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+                </div>
+            `;
+        } else {
+            return `<div class="wave" onclick="window.open('${audioUrl}', '_blank')" style="cursor:pointer;" title="새 창에서 듣기"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>`;
+        }
     }
     
     // 단일 미디어 또는 옛날 데이터 (mediaArray 없음)
@@ -277,6 +291,18 @@ function createCard(doc, data) {
     const dateText = formatDate(data.createdAt);
     const mediaHtml = getCardMediaHtml(data, isVideo, isAudio, doc.id);
     
+    // 오디오 파일이 있으면 카드 내용(card-body) 안에 플레이어 직접 생성
+    let audioPlayersHtml = '';
+    if (data.mediaArray && data.mediaArray.length > 0) {
+        data.mediaArray.forEach((media) => {
+            if (media.type === 'audio' || (media.url && media.url.match(/\.(mp3|wav|ogg|m4a)$/i))) {
+                audioPlayersHtml += `<audio controls src="${media.url}" style="width:100%; height:36px; margin-top:8px; border-radius:6px;"></audio>`;
+            }
+        });
+    } else if (data.url && (isAudio || data.url.match(/\.(mp3|wav|ogg|m4a)$/i))) {
+        audioPlayersHtml = `<audio controls src="${data.url}" style="width:100%; height:36px; margin-top:8px; border-radius:6px;"></audio>`;
+    }
+    
     let adminControls = `
         <div class="admin-controls hidden">
             <button class="edit-btn" data-id="${doc.id}">수정</button>
@@ -298,6 +324,7 @@ function createCard(doc, data) {
         <div class="card-body">
           <div class="card-title">${data.title}</div>
           <div class="card-desc">${data.desc || ''}</div>
+          ${audioPlayersHtml}
           <div class="card-meta">
             <span>${dateText}</span>
             ${adminControls}
