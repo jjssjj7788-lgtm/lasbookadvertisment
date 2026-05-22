@@ -491,15 +491,20 @@ const detailMeta = document.getElementById("detailMeta");
 const detailDesc = document.getElementById("detailDesc");
 
 function openDetailModal(docId) {
+    if (!detailModal) {
+        alert("업데이트가 진행 중입니다. 잠시 후 강력 새로고침(Ctrl + F5)을 해주세요!");
+        return;
+    }
+    
     const data = windowDataStore[docId];
     if (!data) return;
 
     // 1. 텍스트 세팅
-    detailTitle.textContent = data.title || '제목 없음';
-    detailDesc.textContent = data.desc || '';
-    detailMeta.textContent = formatDate(data.createdAt);
-    detailTags.innerHTML = '';
-    if (data.tags && data.tags.length > 0) {
+    if (detailTitle) detailTitle.textContent = data.title || '제목 없음';
+    if (detailDesc) detailDesc.textContent = data.desc || '';
+    if (detailMeta) detailMeta.textContent = formatDate(data.createdAt);
+    if (detailTags) detailTags.innerHTML = '';
+    if (data.tags && data.tags.length > 0 && detailTags) {
         data.tags.forEach(t => {
             const span = document.createElement("span");
             span.className = "badge";
@@ -514,6 +519,7 @@ function openDetailModal(docId) {
     }
 
     // 2. 미디어 세팅
+    if (!detailMediaArea) return;
     detailMediaArea.innerHTML = '';
     const isAudio = data.tags && data.tags.includes('audio');
     
@@ -536,7 +542,7 @@ function openDetailModal(docId) {
                     <audio src="${media.url}" controls autoplay style="width:100%; height:20%; z-index:10; border-radius:0; background:#f1f3f5; padding:10px; box-sizing:border-box;"></audio>
                 </div>
             `;
-        } else if (media.type === 'video' || (media.url.match(/\.(mp4|webm)$/i))) {
+        } else if (media.type === 'video' || (media.url && media.url.match(/\.(mp4|webm)$/i))) {
             detailMediaArea.innerHTML = `<video src="${media.url}" controls autoplay style="width:100%; height:100%; object-fit:contain;"></video>`;
         } else {
             detailMediaArea.innerHTML = `<img src="${media.url}" style="width:100%; height:100%; object-fit:contain;"/>`;
@@ -555,7 +561,7 @@ function openDetailModal(docId) {
                             <audio src="${media.url}" controls ${idx===0?'autoplay':''} style="width:100%; height:20%; z-index:10; border-radius:0; background:#f1f3f5; padding:10px; box-sizing:border-box;"></audio>
                         </div>
                     </div>`;
-            } else if (media.type === 'video' || (media.url.match(/\.(mp4|webm)$/i))) {
+            } else if (media.type === 'video' || (media.url && media.url.match(/\.(mp4|webm)$/i))) {
                 sliderHtml += `<div class="detail-slide-item"><video src="${media.url}" controls ${idx===0?'autoplay':''} style="width:100%; height:100%; object-fit:contain;"></video></div>`;
             } else {
                 sliderHtml += `<div class="detail-slide-item"><img src="${media.url}" style="width:100%; height:100%; object-fit:contain;"/></div>`;
@@ -572,16 +578,20 @@ function openDetailModal(docId) {
     document.body.style.overflow = "hidden"; // 스크롤 방지
 }
 
-detailCloseBtn.addEventListener("click", () => {
-    detailModal.classList.add("hidden");
-    document.body.style.overflow = "";
-    detailMediaArea.innerHTML = ""; // 모달 닫을 때 미디어(영상/음성) 재생 중지
-});
-
-detailModal.addEventListener("click", (e) => {
-    if (e.target === detailModal) {
+if (detailCloseBtn) {
+    detailCloseBtn.addEventListener("click", () => {
         detailModal.classList.add("hidden");
         document.body.style.overflow = "";
-        detailMediaArea.innerHTML = "";
-    }
-});
+        detailMediaArea.innerHTML = ""; // 모달 닫을 때 미디어(영상/음성) 재생 중지
+    });
+}
+
+if (detailModal) {
+    detailModal.addEventListener("click", (e) => {
+        if (e.target === detailModal) {
+            detailModal.classList.add("hidden");
+            document.body.style.overflow = "";
+            detailMediaArea.innerHTML = "";
+        }
+    });
+}
