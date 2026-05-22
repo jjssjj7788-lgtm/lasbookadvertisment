@@ -39,6 +39,7 @@
       <a href="#" class="nav-link-item" data-cat="audio">음성</a>
       <a href="#" class="nav-link-item" data-cat="image">이미지</a>
       <a href="#" class="nav-link-item" data-cat="doc">문서</a>
+      <a href="#" class="nav-link-item" data-cat="link">링크</a>
     </div>
     <div class="nav-cta">
         <button id="logoutBtn" class="pill hidden">로그아웃</button>
@@ -63,6 +64,7 @@
         <div class="stat"><div class="n" id="stat-audio">0</div><div class="l">음성 AUDIO</div></div>
         <div class="stat"><div class="n" id="stat-image">0</div><div class="l">이미지 IMAGES</div></div>
         <div class="stat"><div class="n" id="stat-doc">0</div><div class="l">문서 DOCS</div></div>
+        <div class="stat"><div class="n" id="stat-link">0</div><div class="l">링크 LINKS</div></div>
       </div>
     </div>
     <!-- 오른쪽 빈공간: 포스터 이미지 -->
@@ -91,6 +93,7 @@
   <button class="chip" data-cat="audio"><span class="dot" style="background:#a165d4"></span>음성 <span class="count" id="chip-audio">0</span></button>
   <button class="chip" data-cat="image"><span class="dot" style="background:#ff9bb8"></span>이미지 <span class="count" id="chip-image">0</span></button>
   <button class="chip" data-cat="doc"><span class="dot" style="background:#ff9a3d"></span>문서 <span class="count" id="chip-doc">0</span></button>
+  <button class="chip" data-cat="link"><span class="dot" style="background:#4ade80"></span>링크 <span class="count" id="chip-link">0</span></button>
 </div>
 
 <!-- ============ MAIN GRID ============ -->
@@ -128,6 +131,14 @@
     </span>회사 문서 자료</h2>
   </div>
   <div class="grid" id="grid-doc" style="display:none;"></div>
+
+  <!-- LINKS -->
+  <div class="section-head" data-section="link" style="margin-top:34px; display:none;">
+    <h2><span class="ico" style="background:#dcfce7;color:#16a34a">
+      <svg style="width:16px;height:16px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+    </span>회사 링크 자료</h2>
+  </div>
+  <div class="grid" id="grid-link" style="display:none;"></div>
 </main>
 
 <!-- ============ FOOTER ============ -->

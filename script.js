@@ -185,6 +185,7 @@ const gridVideo = document.getElementById('grid-video');
 const gridAudio = document.getElementById('grid-audio');
 const gridImage = document.getElementById('grid-image');
 const gridDoc = document.getElementById('grid-doc');
+const gridLink = document.getElementById('grid-link');
 const loadingText = document.getElementById('loadingText');
 
 function formatDate(timestamp) {
@@ -271,19 +272,26 @@ function createCard(doc, data) {
     
     const isVideo = data.tags && data.tags.includes('video');
     const isAudio = data.tags && data.tags.includes('audio');
+    const isLink = data.tags && data.tags.includes('link');
     const badgeText = getCardBadge(data.tags || []);
     const dateText = formatDate(data.createdAt);
     const mediaHtml = getCardMediaHtml(data, isVideo, isAudio, doc.id);
     
     let adminControls = `
         <div class="admin-controls hidden">
-            <button class="edit-btn" data-id="${doc.id}" onclick="event.stopPropagation()">수정</button>
-            <button class="delete-btn" data-id="${doc.id}" onclick="event.stopPropagation()">삭제</button>
+            <button class="edit-btn" data-id="${doc.id}" onclick="event.stopPropagation();">수정</button>
+            <button class="delete-btn" data-id="${doc.id}" onclick="event.stopPropagation();">삭제</button>
         </div>
     `;
 
+    let targetUrl = data.url;
+    if (!targetUrl && data.mediaArray && data.mediaArray.length > 0) {
+        targetUrl = data.mediaArray[0].url;
+    }
+    let clickHandler = isLink ? `window.open('${targetUrl}', '_blank')` : `openDetailModal('${doc.id}')`;
+
     return `
-      <article class="card" data-title="${(data.title||'').toLowerCase()}" data-desc="${(data.desc||'').toLowerCase()}" onclick="openDetailModal('${doc.id}')" style="cursor:pointer;">
+      <article class="card" data-title="${(data.title||'').toLowerCase()}" data-desc="${(data.desc||'').toLowerCase()}" onclick="${clickHandler}" style="cursor:pointer;">
         <div class="thumb">
           <span class="badge" style="z-index:10;">
             ${isVideo?'<svg style="width:11px;height:11px" viewBox="0 0 24 24" fill="currentColor"><polygon points="6,4 20,12 6,20"/></svg>':''}
@@ -312,8 +320,9 @@ db.collection('gallery').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
     gridAudio.innerHTML = '';
     gridImage.innerHTML = '';
     gridDoc.innerHTML = '';
+    gridLink.innerHTML = '';
 
-    let cntVideo = 0, cntAudio = 0, cntImage = 0, cntDoc = 0;
+    let cntVideo = 0, cntAudio = 0, cntImage = 0, cntDoc = 0, cntLink = 0;
 
     snapshot.forEach(docSnap => {
         const data = docSnap.data();
@@ -328,6 +337,9 @@ db.collection('gallery').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
         } else if (tags.includes('image') || tags.includes('poster')) {
             gridImage.innerHTML += createCard(docSnap, data);
             cntImage++;
+        } else if (tags.includes('link')) {
+            gridLink.innerHTML += createCard(docSnap, data);
+            cntLink++;
         } else {
             gridDoc.innerHTML += createCard(docSnap, data);
             cntDoc++;
@@ -347,7 +359,10 @@ db.collection('gallery').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
     document.querySelector('[data-section="doc"]').style.display = cntDoc > 0 ? 'flex' : 'none';
     gridDoc.style.display = cntDoc > 0 ? 'grid' : 'none';
 
-    if (cntVideo + cntAudio + cntImage + cntDoc === 0) {
+    document.querySelector('[data-section="link"]').style.display = cntLink > 0 ? 'flex' : 'none';
+    gridLink.style.display = cntLink > 0 ? 'grid' : 'none';
+
+    if (cntVideo + cntAudio + cntImage + cntDoc + cntLink === 0) {
         loadingText.innerText = "아직 업로드된 자료가 없습니다.";
         loadingText.style.display = 'block';
     }
@@ -357,12 +372,14 @@ db.collection('gallery').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
     document.getElementById('stat-audio').innerText = cntAudio;
     document.getElementById('stat-image').innerText = cntImage;
     document.getElementById('stat-doc').innerText = cntDoc;
+    document.getElementById('stat-link').innerText = cntLink;
     
     document.getElementById('chip-video').innerText = cntVideo;
     document.getElementById('chip-audio').innerText = cntAudio;
     document.getElementById('chip-image').innerText = cntImage;
     document.getElementById('chip-doc').innerText = cntDoc;
-    document.getElementById('chip-all').innerText = cntVideo + cntAudio + cntImage + cntDoc;
+    document.getElementById('chip-link').innerText = cntLink;
+    document.getElementById('chip-all').innerText = cntVideo + cntAudio + cntImage + cntDoc + cntLink;
 
     updateAdminButtons();
 });
@@ -570,6 +587,18 @@ function openDetailModal(docId) {
                         📖 전체 화면으로 넓게 읽기
                     </button>
                     <p style="margin-top:14px; font-size:13px; color:#777; font-weight:600;">보안 문서는 다운로드할 수 없습니다.</p>
+                </div>
+            `;
+        }
+        // 순수 링크인 경우 (외부 링크 이동 버튼 제공)
+        else if (data.tags && data.tags.includes('link')) {
+            return `
+                <div style="width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#f1f3f5;">
+                    <div style="font-size:64px; margin-bottom:20px;">🌐</div>
+                    <h3 style="margin-bottom:20px; color:#333; text-align:center;">외부 링크 자료입니다</h3>
+                    <a href="${media.url}" target="_blank" style="background:var(--mint); color:white; padding:14px 28px; border-radius:30px; text-decoration:none; font-weight:bold; font-size:16px; box-shadow:0 4px 12px rgba(0,0,0,0.15); transition:transform 0.2s;">
+                        새 창에서 링크 열기
+                    </a>
                 </div>
             `;
         }
