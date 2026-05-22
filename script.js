@@ -240,10 +240,10 @@ function getCardMediaHtml(data, isVideo, isAudio, docId) {
         }
 
         if (url) {
-            if (isVideo || (url.match(/\.(mp4|webm)$/i))) {
+            if (isVideo || (url.match(/\.(mp4|webm)/i))) {
                  if (data.thumbnailUrl) return `<img class="real-img" src="${data.thumbnailUrl}" />`;
                  return `<video class="real-video" src="${url}" preload="metadata"></video>`;
-            } else if (url.match(/\.(jpeg|jpg|gif|png)$/i)) {
+            } else if (url.match(/\.(jpeg|jpg|gif|png|webp)/i)) {
                  return `<img class="real-img" src="${url}" />`;
             }
         }
@@ -253,7 +253,7 @@ function getCardMediaHtml(data, isVideo, isAudio, docId) {
     // 다중 미디어 (메인화면에서는 대표 이미지만 표시하고 우측 상단에 장수 표시)
     let displayUrl = data.thumbnailUrl || data.mediaArray[0].url;
     let html = '';
-    if (data.mediaArray[0].type === 'video' || (displayUrl && displayUrl.match(/\.(mp4|webm)$/i))) {
+    if (data.mediaArray[0].type === 'video' || (displayUrl && displayUrl.match(/\.(mp4|webm)/i))) {
         if (data.thumbnailUrl) {
             html = `<img class="real-img" src="${data.thumbnailUrl}" />`;
         } else {
@@ -304,36 +304,7 @@ function createCard(doc, data) {
       </article>`;
 }
 
-function createDocRow(doc, data) {
-    const dateText = formatDate(data.createdAt);
-    let url = data.mediaArray && data.mediaArray.length > 0 ? data.mediaArray[0].url : data.url;
-    let ext = 'DOCX';
-    if(url.includes('.pdf')) ext = 'PDF';
-    else if(url.includes('.xls')) ext = 'XLSX';
-    else if(url.includes('.ppt')) ext = 'PPTX';
-    else if(url.includes('.zip')) ext = 'ZIP';
-
-    let adminControls = `
-        <div class="admin-controls hidden" style="margin-left:auto;">
-            <button class="edit-btn" data-id="${doc.id}">수정</button>
-            <button class="delete-btn" data-id="${doc.id}">삭제</button>
-        </div>
-    `;
-
-    return `
-      <div class="doc-row card" data-title="${(data.title||'').toLowerCase()}" data-desc="${(data.desc||'').toLowerCase()}">
-        <div class="doc-icon ${ext.toLowerCase()}">${ext}</div>
-        <div class="doc-info">
-          <div class="t">${data.title}</div>
-          <div class="s">${data.desc || ''}</div>
-        </div>
-        <div class="doc-meta">${dateText}</div>
-        ${adminControls}
-        <button class="doc-btn" title="열기" onclick="window.open('${url}', '_blank')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        </button>
-      </div>`;
-}
+// createDocRow 함수는 삭제 (문서도 createCard로 통합)
 
 db.collection('gallery').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
     loadingText.style.display = 'none';
@@ -358,7 +329,7 @@ db.collection('gallery').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
             gridImage.innerHTML += createCard(docSnap, data);
             cntImage++;
         } else {
-            gridDoc.innerHTML += createDocRow(docSnap, data);
+            gridDoc.innerHTML += createCard(docSnap, data);
             cntDoc++;
         }
     });
@@ -374,7 +345,7 @@ db.collection('gallery').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
     gridImage.style.display = cntImage > 0 ? 'grid' : 'none';
     
     document.querySelector('[data-section="doc"]').style.display = cntDoc > 0 ? 'flex' : 'none';
-    gridDoc.style.display = cntDoc > 0 ? 'flex' : 'none';
+    gridDoc.style.display = cntDoc > 0 ? 'grid' : 'none';
 
     if (cntVideo + cntAudio + cntImage + cntDoc === 0) {
         loadingText.innerText = "아직 업로드된 자료가 없습니다.";
@@ -447,7 +418,7 @@ function applyCategoryFilter(cat) {
         const show = (cat==="all" || sectionId===cat) && grid.children.length > 0;
         
         h.style.display = show ? "flex" : "none";
-        grid.style.display = show ? (sectionId === 'doc' ? 'flex' : 'grid') : "none";
+        grid.style.display = show ? "grid" : "none";
     });
 }
 
@@ -532,14 +503,16 @@ function openDetailModal(docId) {
 
     function renderMediaItem(media, isOnlyItem, idx) {
         // 정확한 파일 타입 유추
-        let isVideoItem = media.type === 'video' || (media.url && media.url.match(/\.(mp4|webm)$/i));
-        let isAudioItem = media.type === 'audio' || (media.url && media.url.match(/\.(mp3|wav|ogg|m4a)$/i));
-        let isImageItem = media.type === 'image' || (media.url && media.url.match(/\.(jpeg|jpg|gif|png)$/i));
+        let isVideoItem = media.type === 'video' || (media.url && media.url.match(/\.(mp4|webm)/i));
+        let isAudioItem = media.type === 'audio' || (media.url && media.url.match(/\.(mp3|wav|ogg|m4a)/i));
+        let isImageItem = media.type === 'image' || (media.url && media.url.match(/\.(jpeg|jpg|gif|png|webp)/i));
+        let isDocItem = media.type === 'doc' || (media.url && media.url.match(/\.(pdf|doc|docx|xls|xlsx|ppt|pptx|zip)/i));
 
         // URL이나 type으로 확인이 안 되면 태그 기반으로 추측 (단, 이미지가 확실한 경우 우선순위)
-        if (!isVideoItem && !isAudioItem && !isImageItem) {
+        if (!isVideoItem && !isAudioItem && !isImageItem && !isDocItem) {
             if (data.tags && data.tags.includes('video')) isVideoItem = true;
             else if (data.tags && data.tags.includes('audio')) isAudioItem = true;
+            else if (data.tags && data.tags.includes('doc')) isDocItem = true;
             else isImageItem = true; // 기본적으로 알 수 없는 링크는 이미지로 시도하거나 iframe? 우선 이미지/텍스트로 처리
         }
 
@@ -548,7 +521,7 @@ function openDetailModal(docId) {
             let thumbUrl = data.thumbnailUrl;
             // 썸네일이 없고 미디어가 여러 개일 때 이미지가 있다면 그걸 썸네일로 활용
             if (!thumbUrl && items.length > 1) {
-                const imgMedia = items.find(i => i.type === 'image' || (i.url && i.url.match(/\.(jpeg|jpg|gif|png)$/i)));
+                const imgMedia = items.find(i => i.type === 'image' || (i.url && i.url.match(/\.(jpeg|jpg|gif|png|webp)/i)));
                 if (imgMedia) thumbUrl = imgMedia.url;
             }
 
@@ -575,6 +548,25 @@ function openDetailModal(docId) {
         else if (isVideoItem) {
             return `<video src="${media.url}" controls ${idx === 0 ? 'autoplay' : ''} style="width:100%; height:100%; object-fit:contain;"></video>`;
         } 
+        // 문서 파일인 경우
+        else if (isDocItem) {
+            let thumbUrl = data.thumbnailUrl || '';
+            if (!thumbUrl && items.length > 1) {
+                const imgMedia = items.find(i => i.type === 'image' || (i.url && i.url.match(/\.(jpeg|jpg|gif|png|webp)/i)));
+                if (imgMedia) thumbUrl = imgMedia.url;
+            }
+            
+            let displayHtml = thumbUrl ? 
+                `<img src="${thumbUrl}" style="max-height:60%; max-width:80%; object-fit:contain; margin-bottom:20px; box-shadow:0 4px 12px rgba(0,0,0,0.1);" />` : 
+                `<div style="font-size:64px; margin-bottom:20px;">📄</div>`;
+
+            return `
+                <div style="width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#f8f9fa;">
+                    ${displayHtml}
+                    <a href="${media.url}" target="_blank" style="background:var(--blue); color:white; padding:12px 24px; border-radius:30px; text-decoration:none; font-weight:bold; font-size:16px; box-shadow:0 4px 12px rgba(0,0,0,0.15); transition:transform 0.2s;">문서 열기 / 다운로드</a>
+                </div>
+            `;
+        }
         // 이미지 및 기타인 경우
         else {
             return `<img src="${media.url}" style="width:100%; height:100%; object-fit:contain; cursor:pointer;" onclick="window.open('${media.url}', '_blank')" title="클릭하여 원본 보기"/>`;
