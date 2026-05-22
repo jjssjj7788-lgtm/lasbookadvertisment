@@ -15,6 +15,7 @@ const db = firebase.firestore();
 const storage = firebase.storage();
 
 // --- 모달 요소 ---
+const windowDataStore = {}; // 상세 보기 모달을 위해 데이터 저장
 const loginModal = document.getElementById('loginModal');
 const uploadModal = document.getElementById('uploadModal');
 const editModal = document.getElementById('editModal');
