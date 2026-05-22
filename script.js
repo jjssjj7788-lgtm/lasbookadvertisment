@@ -243,38 +243,65 @@ db.collection('gallery').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
         const info = typeInfo[data.type] || typeInfo['link'];
         
         function renderMedia(media, thumb, defaultBtnText) {
+            let overlayHtml = '';
+            if (thumb && (media.type === 'video' || (media.url && media.url.match(/\.(mp4|webm)$/i)))) {
+                overlayHtml = `<div class="thumbnail-overlay" style="background-image:url('${thumb}')" onclick="this.style.display='none'; this.nextElementSibling.play && this.nextElementSibling.play()">
+                                  <div class="play-icon">▶</div>
+                               </div>`;
+            }
+
             if (media.type === 'video' || (media.url && media.url.match(/\.(mp4|webm)$/i))) {
                 if (media.url.includes('drive.google.com')) {
                     const previewUrl = media.url.replace(/\/view.*/, '/preview');
-                    return `<iframe src="${previewUrl}" width="100%" height="200" style="border:none; border-radius:10px; margin-top:10px;" allowfullscreen></iframe>`;
+                    return `${overlayHtml}<iframe src="${previewUrl}" width="100%" height="400" allowfullscreen></iframe>`;
                 } else if (media.url.includes('youtube.com') || media.url.includes('youtu.be')) {
                     let videoId = "";
                     if (media.url.includes('v=')) videoId = media.url.split('v=')[1].split('&')[0];
                     else if (media.url.includes('youtu.be/')) videoId = media.url.split('youtu.be/')[1].split('?')[0];
-                    if (videoId) return `<iframe src="https://www.youtube.com/embed/${videoId}" width="100%" height="200" style="border:none; border-radius:10px; margin-top:10px;" allowfullscreen></iframe>`;
+                    if (videoId) return `${overlayHtml}<iframe src="https://www.youtube.com/embed/${videoId}" width="100%" height="400" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
                 } else {
-                    let posterAttr = thumb ? `poster="${thumb}"` : '';
-                    return `<video src="${media.url}" ${posterAttr} controls width="100%" style="border-radius:10px; margin-top:10px; max-height:300px; background:#000;"></video>`;
+                    return `${overlayHtml}<video src="${media.url}" controls width="100%"></video>`;
                 }
             } else if (media.type === 'image' || (media.url && media.url.match(/\.(jpeg|jpg|gif|png)$/i))) {
-                return `<img src="${media.url}" width="100%" style="border-radius:10px; margin-top:10px; max-height:300px; object-fit:contain; background:#f9f9f9;">`;
+                return `<img src="${media.url}" width="100%">`;
             } else if (media.type === 'audio' || (media.url && media.url.match(/\.(mp3|wav|ogg)$/i))) {
-                return `<audio src="${media.url}" controls style="width:100%; margin-top:10px;"></audio>`;
+                return `<audio src="${media.url}" controls style="width:100%; padding:20px;"></audio>`;
             } else {
-                return `<a href="${media.url}" class="btn btn-primary" target="_blank" style="margin-top:10px; display:inline-block;">${defaultBtnText}</a>`;
+                return `<a href="${media.url}" class="btn btn-primary" target="_blank" style="margin-top:20px; display:inline-block;">${defaultBtnText}</a>`;
             }
         }
 
         let mediaHtml = '';
+        let badgesHtml = '';
+        
+        if (data.mediaArray && data.mediaArray.length > 0) {
+            let hasVideo = data.mediaArray.some(m => m.type === 'video');
+            let hasImage = data.mediaArray.some(m => m.type === 'image');
+            let hasAudio = data.mediaArray.some(m => m.type === 'audio');
+            if(hasVideo) badgesHtml += `<span class="badge video-badge">🎥 영상 포함</span>`;
+            if(hasImage) badgesHtml += `<span class="badge image-badge">🖼️ 이미지 포함</span>`;
+            if(hasAudio) badgesHtml += `<span class="badge audio-badge">🎙️ 음성 포함</span>`;
+            if(!hasVideo && !hasImage && !hasAudio) badgesHtml += `<span class="badge link-badge">🌐 첨부파일</span>`;
+        } else {
+            if(data.type === 'video') badgesHtml += `<span class="badge video-badge">🎥 영상</span>`;
+            else if(data.type === 'image') badgesHtml += `<span class="badge image-badge">🖼️ 이미지</span>`;
+            else badgesHtml += `<span class="badge link-badge">🌐 ${info.label}</span>`;
+        }
+
         if (data.mediaArray && data.mediaArray.length > 0) {
             if (data.mediaArray.length === 1) {
                 mediaHtml = renderMedia(data.mediaArray[0], data.thumbnailUrl, info.btn);
             } else {
-                mediaHtml = `<div class="media-slider">`;
+                let sliderId = 'slider_' + doc.id;
+                mediaHtml = `<div class="media-slider-container">
+                                <button class="slider-arrow left" onclick="document.getElementById('${sliderId}').scrollBy({left:-300, behavior:'smooth'})">◀</button>
+                                <div class="media-slider" id="${sliderId}">`;
                 data.mediaArray.forEach(media => {
                     mediaHtml += `<div class="media-slide-item">${renderMedia(media, data.thumbnailUrl, info.btn)}</div>`;
                 });
-                mediaHtml += `</div>`;
+                mediaHtml += `  </div>
+                                <button class="slider-arrow right" onclick="document.getElementById('${sliderId}').scrollBy({left:300, behavior:'smooth'})">▶</button>
+                             </div>`;
             }
         } else {
             mediaHtml = renderMedia({ url: data.url, type: data.type }, data.thumbnailUrl, info.btn);
@@ -282,14 +309,11 @@ db.collection('gallery').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
         
         const itemHtml = `
             <div class="gallery-item" style="animation: fadeInUp 0.6s ease forwards;">
-                <div class="gallery-content ${info.class}">
-                    <div class="media-icon">${info.icon}</div>
-                    <h4>${info.label}</h4>
-                </div>
-                <h5 style="text-align:center; margin-top:15px; color:var(--primary-color);">${data.title}</h5>
-                <p>${data.desc}</p>
+                <h3 class="post-title">${data.title}</h3>
+                <div class="badges-container">${badgesHtml}</div>
                 ${mediaHtml}
-                <button class="delete-btn btn btn-secondary hidden" style="margin: 10px 20px 20px; font-size:12px; padding: 5px 10px; background:#ff4444;" data-id="${doc.id}">삭제</button>
+                <p>${data.desc}</p>
+                <button class="delete-btn btn btn-secondary hidden" style="margin: 0 20px 20px; font-size:12px; padding: 5px 10px; background:#ff4444;" data-id="${doc.id}">삭제</button>
             </div>
         `;
         galleryContainer.innerHTML += itemHtml;
