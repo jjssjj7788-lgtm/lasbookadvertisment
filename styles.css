@@ -315,6 +315,9 @@ footer{
 }
 @media (max-width:520px){
   .hero{padding:24px 16px 10px}
+  .hero-card{padding:24px 20px}
+  .hero h1{font-size:28px}
+  .hero-stats{gap:12px; flex-wrap:wrap; justify-content:space-between}
   .toolbar,.cats,.grid-wrap{padding-left:16px;padding-right:16px}
   .nav-inner{padding:12px 16px}
 }
@@ -454,3 +457,10 @@ footer{
   transition: 0.3s;
 }
 .detail-dot.active { background: #fff; width: 24px; border-radius: 4px; }
+
+/* 숨김 파일 관리자용 UI (투명도 감소, 점선 테두리) */
+.is-hidden-doc {
+  opacity: 0.5;
+  filter: grayscale(30%);
+  border: 2px dashed #ff9a3d !important;
+}

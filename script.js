@@ -10,9 +10,12 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
+const analytics = firebase.analytics();
 const auth = firebase.auth();
 const db = firebase.firestore();
 const storage = firebase.storage();
+
+// 페이지 방문 시 자동으로 방문 기록(Page View)이 구글 애널리틱스로 전송됩니다.
 
 // --- 모달 요소 ---
 const windowDataStore = {}; // 상세 보기 모달을 위해 데이터 저장
@@ -74,6 +77,7 @@ document.getElementById('submitUploadBtn').addEventListener('click', async () =>
     const files = document.getElementById('uploadFile').files;
     const thumbnailFile = document.getElementById('uploadThumbnail').files[0];
     const link = document.getElementById('uploadLink').value;
+    const isHidden = document.getElementById('uploadIsHidden').checked;
     const status = document.getElementById('uploadStatus');
 
     const tagCheckboxes = document.querySelectorAll('input[name="uploadTags"]:checked');
@@ -130,6 +134,7 @@ document.getElementById('submitUploadBtn').addEventListener('click', async () =>
             url: finalUrl,
             mediaArray: mediaArray,
             thumbnailUrl: thumbnailUrl,
+            isHidden: isHidden,
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
@@ -142,6 +147,7 @@ document.getElementById('submitUploadBtn').addEventListener('click', async () =>
             document.getElementById('uploadFile').value = "";
             document.getElementById('uploadThumbnail').value = "";
             document.getElementById('uploadLink').value = "";
+            document.getElementById('uploadIsHidden').checked = false;
             document.querySelectorAll('input[name="uploadTags"]').forEach(cb => cb.checked = false);
         }, 1000);
     } catch (error) {
@@ -155,6 +161,7 @@ document.getElementById('submitEditBtn').addEventListener('click', async () => {
     const docId = document.getElementById('editDocId').value;
     const title = document.getElementById('editTitle').value;
     const desc = document.getElementById('editDesc').value;
+    const isHidden = document.getElementById('editIsHidden').checked;
     const status = document.getElementById('editStatus');
     
     if (!title) { status.innerText = "제목을 입력해주세요."; return; }
@@ -168,7 +175,8 @@ document.getElementById('submitEditBtn').addEventListener('click', async () => {
         await db.collection('gallery').doc(docId).update({
             title: title,
             desc: desc,
-            tags: tags
+            tags: tags,
+            isHidden: isHidden
         });
         status.innerText = "수정 완료!";
         setTimeout(() => {
@@ -279,6 +287,9 @@ function createCard(doc, data) {
     
     let adminControls = `
         <div class="admin-controls hidden">
+            <button class="toggle-hide-btn" data-id="${doc.id}" data-hidden="${data.isHidden ? 'true' : 'false'}" onclick="event.stopPropagation();" style="background:${data.isHidden ? 'var(--orange-soft)' : '#e5e7eb'}; color:${data.isHidden ? '#cc6f1c' : '#4b5563'}; padding: 4px 8px; font-size: 11px; border-radius: 4px; border: none; font-weight: bold;">
+                ${data.isHidden ? '👁️ 보이기' : '🙈 숨기기'}
+            </button>
             <button class="edit-btn" data-id="${doc.id}" onclick="event.stopPropagation();">수정</button>
             <button class="delete-btn" data-id="${doc.id}" onclick="event.stopPropagation();">삭제</button>
         </div>
@@ -289,9 +300,11 @@ function createCard(doc, data) {
         targetUrl = data.mediaArray[0].url;
     }
     let clickHandler = isLink ? `window.open('${targetUrl}', '_blank')` : `openDetailModal('${doc.id}')`;
+    
+    let hiddenClass = data.isHidden ? 'is-hidden-doc' : '';
 
     return `
-      <article class="card" data-title="${(data.title||'').toLowerCase()}" data-desc="${(data.desc||'').toLowerCase()}" onclick="${clickHandler}" style="cursor:pointer;">
+      <article class="card ${hiddenClass}" data-title="${(data.title||'').toLowerCase()}" data-desc="${(data.desc||'').toLowerCase()}" onclick="${clickHandler}" style="cursor:pointer;">
         <div class="thumb">
           <span class="badge" style="z-index:10;">
             ${isVideo?'<svg style="width:11px;height:11px" viewBox="0 0 24 24" fill="currentColor"><polygon points="6,4 20,12 6,20"/></svg>':''}
@@ -304,8 +317,11 @@ function createCard(doc, data) {
         <div class="card-body">
           <div class="card-title">${data.title}</div>
           <div class="card-desc">${data.desc || ''}</div>
-          <div class="card-meta">
+          <div class="card-meta" style="display:flex; align-items:center;">
             <span>${dateText}</span>
+            <button class="share-btn" onclick="shareItem(event, '${doc.id}')" style="margin-left:auto; color:var(--ink-3); padding:4px; border-radius:4px; transition:color 0.2s;" title="이 자료만 공유하기">
+                <svg style="width:16px;height:16px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+            </button>
             ${adminControls}
           </div>
         </div>
@@ -314,7 +330,11 @@ function createCard(doc, data) {
 
 // createDocRow 함수는 삭제 (문서도 createCard로 통합)
 
-db.collection('gallery').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
+let currentSnapshot = null;
+
+function renderGallery(snapshot) {
+    if (!snapshot) return;
+    
     loadingText.style.display = 'none';
     gridVideo.innerHTML = '';
     gridAudio.innerHTML = '';
@@ -323,10 +343,14 @@ db.collection('gallery').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
     gridLink.innerHTML = '';
 
     let cntVideo = 0, cntAudio = 0, cntImage = 0, cntDoc = 0, cntLink = 0;
+    const user = auth.currentUser;
 
     snapshot.forEach(docSnap => {
         const data = docSnap.data();
         const tags = data.tags || [];
+        
+        // 숨김 파일은 일반 사용자에게는 보이지 않고 카운트도 안됨
+        if (data.isHidden && !user) return;
         
         if (tags.includes('video')) {
             gridVideo.innerHTML += createCard(docSnap, data);
@@ -382,6 +406,38 @@ db.collection('gallery').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
     document.getElementById('chip-all').innerText = cntVideo + cntAudio + cntImage + cntDoc + cntLink;
 
     updateAdminButtons();
+}
+
+function shareItem(e, docId) {
+    e.stopPropagation();
+    const url = window.location.origin + window.location.pathname + '?id=' + docId;
+    navigator.clipboard.writeText(url).then(() => {
+        alert("이 자료의 링크가 복사되었습니다! 원하는 곳에 붙여넣기 하세요.");
+    });
+}
+
+let isFirstLoad = true;
+
+db.collection('gallery').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
+    currentSnapshot = snapshot;
+    renderGallery(snapshot);
+    
+    // 첫 로딩 시 URL에 id 파라미터가 있으면 해당 자료 바로 열기
+    if (isFirstLoad) {
+        isFirstLoad = false;
+        const urlParams = new URLSearchParams(window.location.search);
+        const targetId = urlParams.get('id');
+        if (targetId && windowDataStore[targetId]) {
+            const data = windowDataStore[targetId];
+            if (data.tags && data.tags.includes('link')) {
+                let targetUrl = data.url;
+                if (!targetUrl && data.mediaArray && data.mediaArray.length > 0) targetUrl = data.mediaArray[0].url;
+                if (targetUrl) window.location.href = targetUrl;
+            } else {
+                openDetailModal(targetId);
+            }
+        }
+    }
 });
 
 function updateAdminButtons() {
@@ -396,6 +452,16 @@ function updateAdminButtons() {
                 }
             };
         });
+        document.querySelectorAll('.toggle-hide-btn').forEach(btn => {
+            btn.onclick = async (e) => {
+                e.stopPropagation();
+                const docId = btn.getAttribute('data-id');
+                const isHidden = btn.getAttribute('data-hidden') === 'true';
+                await db.collection('gallery').doc(docId).update({
+                    isHidden: !isHidden
+                });
+            };
+        });
         document.querySelectorAll('.edit-btn').forEach(btn => {
             btn.onclick = async (e) => {
                 e.stopPropagation();
@@ -406,6 +472,7 @@ function updateAdminButtons() {
                 document.getElementById('editDocId').value = docId;
                 document.getElementById('editTitle').value = docData.title || '';
                 document.getElementById('editDesc').value = docData.desc || '';
+                document.getElementById('editIsHidden').checked = !!docData.isHidden;
                 
                 document.querySelectorAll('input[name="editTags"]').forEach(cb => {
                     cb.checked = (docData.tags && docData.tags.includes(cb.value));
@@ -416,7 +483,10 @@ function updateAdminButtons() {
         });
     }
 }
-auth.onAuthStateChanged(() => updateAdminButtons());
+auth.onAuthStateChanged(() => {
+    renderGallery(currentSnapshot);
+    updateAdminButtons();
+});
 
 // ============ INTERACTION ============
 const chips = document.querySelectorAll(".chip");
@@ -491,6 +561,12 @@ function openDetailModal(docId) {
     // 1. 텍스트 세팅
     if (detailTitle) detailTitle.textContent = data.title || '제목 없음';
     if (detailDesc) detailDesc.textContent = data.desc || '';
+    if (detailMeta) detailMeta.textContent = formatDate(data.createdAt);
+    
+    const modalShareBtn = document.getElementById("modalShareBtn");
+    if (modalShareBtn) {
+        modalShareBtn.onclick = (e) => shareItem(e, docId);
+    }
     if (detailMeta) detailMeta.textContent = formatDate(data.createdAt);
     if (detailTags) detailTags.innerHTML = '';
     if (data.tags && data.tags.length > 0 && detailTags) {
@@ -657,20 +733,23 @@ function openFullscreenViewer(url) {
     if (!viewer) {
         viewer = document.createElement('div');
         viewer.id = 'fullscreenViewer';
-        viewer.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; z-index:999999; background:#fff; display:flex; flex-direction:column;';
+        // flex-grow 시 모바일 브라우저 주소창 높이 변화로 인해 구글 문서 뷰어가 무한 리사이즈(가로/세로 변경)되는 버그 방지
+        viewer.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; z-index:999999; background:#fff; overflow:hidden;';
         viewer.innerHTML = `
-            <div style="height:60px; background:#212529; color:white; display:flex; justify-content:space-between; align-items:center; padding:0 20px;">
+            <div style="position:absolute; top:0; left:0; width:100%; height:60px; background:#212529; color:white; display:flex; justify-content:space-between; align-items:center; padding:0 20px; box-sizing:border-box;">
                 <span style="font-weight:bold; font-size:16px;">📄 보안 문서 읽기 모드</span>
                 <button onclick="document.getElementById('fullscreenViewer').style.display='none'" style="background:none; border:none; color:white; font-size:32px; cursor:pointer; line-height:1;">&times;</button>
             </div>
-            <iframe id="fullscreenIframe" style="flex-grow:1; width:100%; border:none;" oncontextmenu="return false;"></iframe>
+            <div style="position:absolute; top:60px; left:0; right:0; bottom:0; overflow:hidden;">
+                <iframe id="fullscreenIframe" style="width:100%; height:100%; border:none; display:block;" oncontextmenu="return false;"></iframe>
+            </div>
         `;
         document.body.appendChild(viewer);
     }
     
     // 로딩 시마다 iframe src 업데이트
     document.getElementById('fullscreenIframe').src = url;
-    viewer.style.display = 'flex';
+    viewer.style.display = 'block';
 }
 
 // ============ 보안 설정 (다운로드 및 캡처 방지) ============
