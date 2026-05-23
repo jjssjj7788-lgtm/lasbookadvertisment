@@ -178,6 +178,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-storage-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-analytics-compat.js"></script>
 
 <!-- 관리자 로그인 모달 -->
 <div id="loginModal" class="modal">
@@ -196,6 +197,12 @@
     <div class="modal-content">
         <span class="close-btn" id="closeUploadBtn">&times;</span>
         <h2>새 자료 업로드</h2>
+        <div style="margin-bottom:15px; padding:10px; background:#fff3cd; border-radius:8px; border:1px solid #ffe69c;">
+            <label style="cursor:pointer; font-weight:bold; color:#856404; display:flex; align-items:center;">
+                <input type="checkbox" id="uploadIsHidden" style="width:18px; height:18px; margin-right:8px;">
+                👀 이 자료 숨기기 (일반 사용자에게 비공개)
+            </label>
+        </div>
         <input type="text" id="uploadTitle" placeholder="가장 크게 보일 제목 (예: 상하이 박람회)" style="font-size:18px; font-weight:bold; border:2px solid var(--primary-color);">
         <div style="margin: 15px 0; background:var(--bg); padding:15px; border-radius:10px;">
             <label style="display:block; margin-bottom:10px; font-weight:bold;">이 게시물의 성격 뱃지 (다중 선택 가능)</label>
@@ -229,6 +236,12 @@
         <span class="close-btn" id="closeEditBtn">&times;</span>
         <h2>자료 수정하기</h2>
         <input type="hidden" id="editDocId">
+        <div style="margin-bottom:15px; padding:10px; background:#fff3cd; border-radius:8px; border:1px solid #ffe69c;">
+            <label style="cursor:pointer; font-weight:bold; color:#856404; display:flex; align-items:center;">
+                <input type="checkbox" id="editIsHidden" style="width:18px; height:18px; margin-right:8px;">
+                👀 이 자료 숨기기 (일반 사용자에게 비공개)
+            </label>
+        </div>
         <input type="text" id="editTitle" placeholder="가장 크게 보일 제목" style="font-size:18px; font-weight:bold; border:2px solid var(--primary-color);">
         <div style="margin: 15px 0; background:var(--bg); padding:15px; border-radius:10px;">
             <label style="display:block; margin-bottom:10px; font-weight:bold;">이 게시물의 성격 뱃지 (다중 선택 가능)</label>
