@@ -434,6 +434,7 @@ db.collection('gallery').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
                 if (!targetUrl && data.mediaArray && data.mediaArray.length > 0) targetUrl = data.mediaArray[0].url;
                 if (targetUrl) window.location.href = targetUrl;
             } else {
+                document.body.classList.add('shared-view');
                 openDetailModal(targetId);
             }
         }

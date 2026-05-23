@@ -464,3 +464,31 @@ footer{
   filter: grayscale(30%);
   border: 2px dashed #ff9a3d !important;
 }
+
+/* 공유된 단일 링크 뷰 모드 */
+body.shared-view > nav,
+body.shared-view > section,
+body.shared-view > div.toolbar,
+body.shared-view > div.cats,
+body.shared-view > main,
+body.shared-view > footer {
+  display: none !important;
+}
+
+body.shared-view .detail-modal {
+  position: static;
+  background-color: var(--bg);
+  min-height: 100vh;
+  display: flex;
+  align-items: flex-start;
+  padding-top: 40px;
+}
+
+body.shared-view .detail-modal-content {
+  box-shadow: 0 10px 40px rgba(0,0,0,0.05);
+  margin: 0 auto 40px;
+}
+
+body.shared-view .detail-close {
+  display: none !important;
+}
